@@ -61,8 +61,8 @@ To start, download the latest [distribution package](https://github.com/hyounesy
 tar xzf alea.1.2.2.tar.gz
 ```
 
-The contents will be extracted into a directory named alea which will be referred as <alea> through the rest of the document.
-Once done, you may run  “<alea>/download_human_data.sh” and/or “<alea>/download_mouse_data.sh” scripts to get the  human or mouse (or both) test datasets. These scripts download all the required input data resources you need to run the allele-specific analysis explained in the Examples section. For each test data you will need 30GB of storage space for the raw input and processed output data  (i.e. 60GB for both mouse and human).
+The contents will be extracted into a directory named alea which will be referred as ```<alea>``` through the rest of the document.
+Once done, you may run  ```<alea>/download_human_data.sh``` and/or ```<alea>/download_mouse_data.sh``` scripts to get the  human or mouse (or both) test datasets. These scripts download all the required input data resources you need to run the allele-specific analysis explained in the Examples section. For each test data you will need 30GB of storage space for the raw input and processed output data  (i.e. 60GB for both mouse and human).
 You may also (optionally) download the individual test data from the data directory (ftp://ftp.bcgsc.ca/supplementary/ALEA/files/test-data/)
 
 ###Software dependencies
@@ -74,7 +74,7 @@ ALEA runs from command line and requires a UNIX based operating system as well a
 
 * [**bowtie**](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) (optional): used to align reads to concatenated genome (pipeline figure: c)
 
-  Note: ALEA uses bwa for alignment by default, but also supports bowtie. You may specify the aligner tool by editing the <alea>/bin/alea.config file.
+  Note: ALEA uses bwa for alignment by default, but also supports bowtie. You may specify the aligner tool by editing the ```<alea>/bin/alea.config``` file.
  
 * [**samtools**](http://sourceforge.net/projects/samtools/files/samtools/): used to process bam files (pipeline figure: c).
 
@@ -93,9 +93,9 @@ ALEA runs from command line and requires a UNIX based operating system as well a
 It is recommended to have all the required dependencies, however different modules use only certain external tools. For example to work with the mouse data, you won’t need the phasing module (pipeline figure: a) as phased vcf files are alredy provided. Thus SHAPEIT, vcftools, tabix and Plink won’t be necessary.
 
 ###Setting the options
-Options such as the allelic alignment method (using concatenated vs. separate genome), aligner tool (BWA or Bowtie) and parameters passed to external tools can be modified in the <alea>/bin/alea.config. The most important options are:
+Options such as the allelic alignment method (using concatenated vs. separate genome), aligner tool (BWA or Bowtie) and parameters passed to external tools can be modified in the ```<alea>/bin/alea.config```. The most important options are:
 
-* ```AL_USE_CONCATENATED_GENOME```: Enables use of concatenated genome method (default=1) or the separate genome method (=0)
+* ```AL_USE_CONCATENATED_GENOME```: Enables use of concatenated genome method (default:```=1```) or the separate genome method (```=0```)
 * ```AL_USE_BWA```: Specifies using BWA for alignment (default)
 * ```AL_USE_BOWTIE1```: Specifies using Bowtie1 for alignment
 * ```AL_USE_BOWTIE2```: Specifies using Bowtie2 for alignment
@@ -106,7 +106,7 @@ Options such as the allelic alignment method (using concatenated vs. separate ge
 
 You can set up the paths to the required tools in either of the following ways:
 
-1- Update ```<alea>/bin/alea.config``` file and edit the variables starting with ```"AL_BIN_"```  to point the locations of the tools.
+1- Update ```<alea>/bin/alea.config``` file and edit the variables starting with ```AL_BIN_```  to point the locations of the tools.
 e.g if bwa is installed under ```~/bin/bwa```, make the following change: 
 
 ```AL_BIN_BWA="~/bin/bwa"```
@@ -172,7 +172,7 @@ The bellow commands are only required on human samples.
 * ```outputPrefix```:		output file prefix including the path but not the extension
 
 #####Output
-Creates the file outputPrefix.vcf.gz
+Creates the file ```outputPrefix.vcf.gz```
 
 ###Insilico genome creation
 The output of the phasing module, the phased variant file, together with the reference genome is
@@ -182,28 +182,36 @@ One can run the bellow command for both human and mouse. The name of strains can
 *C57BL6J , 129S1 , AJ , AKR , BALBcJ  , C3HHeJ , C57BL6NJ , CASTEiJ , CBAJ , DBA2J , FVB_NJ , LPJ , NODShiLtJ , NZO , PWKPhJ , Spretus , WSBEiJ*
 
 #####Usage
-When all SNPs and Indels are in a single vcf file:
+ * When all SNPs and Indels are in a single vcf file:
 
-```alea createGenome reference.fasta phased.vcf.gz strain1 strain2 outputDir```
+  ```
+  alea createGenome reference.fasta \
+         phased.vcf.gz \
+         strain1 strain2 outputDir \
+  ```
 
-When the SNPs and Indels are in two separate vcf files:
+* When the SNPs and Indels are in two separate vcf files:
 
-```alea createGenome -snps-indels-separately reference.fasta phased_snps.vcf.gz phased_indels.vcf.gz strain1 strain2 outputDir```
+  ```
+  alea createGenome -snps-indels-separately reference.fasta \
+         phased_snps.vcf.gz phased_indels.vcf.gz \
+         strain1 strain2 outputDir
+  ```
 
 #####Options
 
-* ```reference.fasta```        	the reference genome fasta file
-* ```phased.vcf.gz```          	the phased variants vcf file (including SNPs and Indels)
-* ```strain1```                		name of strain1 exactly as specified in the vcf file (e.g. hap1)
-* ```strain2```               		name of strain2 exactly as specified in the vcf file (e.g. hap2)
-* ```outputDir```              	location of the output directory
-* ```-snps-indels-separately```	use if SNPs and Indels are in two separate vcf files
-* ```phased-snps.vcf.gz```     	the phased SNPs (should be specified first)
-* ```phased-indels.vcf.gz```       	the phased Indels  (should be specified second)
+* ```reference.fasta``` the reference genome fasta file
+* ```phased.vcf.gz``` the phased variants vcf file (including SNPs and Indels)
+* ```strain1``` name of strain1 exactly as specified in the vcf file (e.g. hap1)
+* ```strain2``` name of strain2 exactly as specified in the vcf file (e.g. hap2)
+* ```outputDir``` location of the output directory
+* ```-snps-indels-separately``` use if SNPs and Indels are in two separate vcf files
+* ```phased-snps.vcf.gz``` the phased SNPs (should be specified first)
+* ```phased-indels.vcf.gz``` the phased Indels  (should be specified second)
 
 #####Output
 Creates two parental in-silico genomes strain1.fasta and strain2.fasta as well as alignment indices.
- A concatenated genome strain1_strain2.fasta will be created if ```AL_USE_CONCATENATED_GENOME=1``` is set in *```alea.config```* .
+ A concatenated genome strain1_strain2.fasta will be created if ```AL_USE_CONCATENATED_GENOME=1``` is set in ```alea.config```.
 
 *Note*:  It is possible to have SNPs and Indels in two separate vcf files. In that case use -snps-indels-separately option, and make sure you specify SNPs before Indels.
 
@@ -215,13 +223,13 @@ The bellow command can be applied on both human and mouse data. To find eligible
 
 #####Usage
 
-using concatenated genome method (```AL_USE_CONCATENATED_GENOME=1```):
+* using concatenated genome method (```AL_USE_CONCATENATED_GENOME=1```):
 
-```alea alignReads <-s/-p> <input_reads_1 [input_reads_2]> <genome_concat> <strain1 strain2> <outputPrefix>```
+  ```alea alignReads <-s/-p> <input_reads_1 [input_reads_2]> <genome_concat> <strain1 strain2> <outputPrefix>```
 
-using separate insilico genomes method (```AL_USE_CONCATENATED_GENOME=0```):
+* using separate insilico genomes method (```AL_USE_CONCATENATED_GENOME=0```):
 
-```alea alignReads <-s/-p> <input_reads_1 [input_reads_2]> <genome1  genome2> <strain1 strain2> <outputPrefix>```
+  ```alea alignReads <-s/-p> <input_reads_1 [input_reads_2]> <genome1  genome2> <strain1 strain2> <outputPrefix>```
 
 #####Options
 * ```-s```              to align single-end reads (requires one input file)
