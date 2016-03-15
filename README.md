@@ -58,7 +58,7 @@ alea createTracks <-s/-p> bamPrefix strain1 strain2 genome1.refmap genome2.refma
 To start, download the latest [distribution package](https://github.com/hyounesy/ALEA/raw/master/alea.1.2.2.tar.gz) and extract using: 
 
 ```bash
-tar xzf alea.1.2.tar.gz
+tar xzf alea.1.2.2.tar.gz
 ```
 
 The contents will be extracted into a directory named alea which will be referred as <alea> through the rest of the document.
