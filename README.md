@@ -26,7 +26,10 @@ Java (1.6 +), Python (2.4 +), bwa (0.7 +) and/or bowtie (1.0.0 or 2.0.9), samtoo
 
 ###Synopsis
 
-``` bashalea phaseVCF hapsDIR unphased.vcf outputDIRalea createGenome reference.fasta phased.vcf.gz strain1 strain2 outputDiralea createGenome -snps-indels-separately reference.fasta phased_snps.vcf.gz phased_indels.vcf.gz strain1 strain2 outputDiralea alignReads -s reads.fastq  genome_concat.fasta  strain1  strain2  outputPrefixalea alignReads -p reads_1.fastq reads_2.fastq  genome_concat.fasta  strain1  strain2  outputPrefixalea createTracks <-s/-p> bamPrefix strain1 strain2 genome1.refmap genome2.refmap chrom.sizes outputDIR```##	InstallationTo start, download the latest [ALEA package](dist/alea.1.2.2.tar.gz) and extract using: 
+``` bashalea phaseVCF hapsDIR unphased.vcf outputDIRalea createGenome reference.fasta phased.vcf.gz strain1 strain2 outputDiralea createGenome -snps-indels-separately reference.fasta phased_snps.vcf.gz phased_indels.vcf.gz strain1 strain2 outputDiralea alignReads -s reads.fastq  genome_concat.fasta  strain1  strain2  outputPrefixalea alignReads -p reads_1.fastq reads_2.fastq  genome_concat.fasta  strain1  strain2  outputPrefixalea createTracks <-s/-p> bamPrefix strain1 strain2 genome1.refmap genome2.refmap chrom.sizes outputDIR```##	Files* [distribution package](https://github.com/hyounesy/ALEA/raw/master/alea.1.2.2.tar.gz)
+* [documentation (PDF)](https://github.com/hyounesy/ALEA/raw/master/doc/ALEA-userguide.pdf)
+* [test data](ftp://ftp.bcgsc.ca/supplementary/ALEA/files/test-data/)
+* [genome browser tracks](ftp://ftp.bcgsc.ca/supplementary/ALEA/files/tracks/)##	InstallationTo start, download the latest [distribution package](https://github.com/hyounesy/ALEA/raw/master/alea.1.2.2.tar.gz) and extract using: 
 
 ```bash
 tar xzf alea.1.2.tar.gz
