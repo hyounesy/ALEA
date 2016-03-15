@@ -106,17 +106,19 @@ Options such as the allelic alignment method (using concatenated vs. separate ge
 
 You can set up the paths to the required tools in either of the following ways:
 
-1- Update ```<alea>/bin/alea.config``` file and edit the variables starting with ```AL_BIN_```  to point the locations of the tools.
+*  Update ```<alea>/bin/alea.config``` file and edit the variables starting with ```AL_BIN_```  to point the locations of the tools.
 e.g if bwa is installed under ```~/bin/bwa```, make the following change: 
 
-```AL_BIN_BWA="~/bin/bwa"```
+  ``` bash
+AL_BIN_BWA="~/bin/bwa"
+```
 
-OR
+Or:
 
-2- Create a link to the location of tools inside the ```<alea>/bin directory```.
+*  Create a link to the location of tools inside the ```<alea>/bin directory```.
 e.g. 
 
-``` bash
+  ``` bash
 cd <alea>/bin
 ln –s PATH_TO_BWA bwa
 ln –s PATH_TO_SAMTOOLS samtools
