@@ -3,6 +3,20 @@
 
 ALEA  is a computational toolbox for allele-specific (AS) epigenomics analysis, which incorporates allelic variation data within existing resources, allowing for the identification of significant associations between epigenetic modifications and specific allelic variants in human and mouse cells. ALEA provides a customizable pipeline of command line tools for AS analysis of next-generationsequencing data (ChIP-seq, RNA-seq, etc.) that takes the raw sequencing data and produces separate allelic tracks ready to be viewed on genome browsers. ALEA takes advantage of the available genomic resources for human (The 1000 Genomes Project Consortium) and mouse (The Mouse Genome Project) to reconstruct diploid in silico genomes for human samples or hybrid mouse samples under study. Then, for each accompanying ChIP-seq or RNA-seq dataset, ALEA generates two wig files from short reads aligned differentially to each haplotype. This pipeline has been validated using human and hybrid mouse ChIP-seq and RNA-seq data (See Test Data section). 
 
+## Table of contents
+  * [Quick Reference](#quick-reference)
+  * [Installation](#installation)
+  * [Test Data](#test-data)
+  * [Usage](#running-alea)
+    * [Genotype phasing](#genotype-phasing) 
+    * [Insilico genome creation](#insilico-genome-creation)
+    * [Allele-specific Alignment](#allele-specific-alignment)
+    * [projecting-to-reference-genome](projecting-to-reference-genome)
+  * [Examples](#examples-1)
+    * [Human skin fibroblast](#example-1-human-skin-fibroblast) 
+    * [Mouse trophoblast](#example2-mouse-trophoblast)
+  * [Using SHAPEIT2](#using-shapeit2-for-genotype-phasing)
+  
 ##	Quick Reference###DependenciesALEA runs from command line and requires a UNIX based operating system. You also need to install an appropriate version of the following dependencies:
 
 Java (1.6 +), Python (2.4 +), bwa (0.7 +) and/or bowtie (1.0.0 or 2.0.9), samtools (0.1.18 +), tabix (0.2.5 +), bgzip, bedGraphToBigWig, SHAPEIT2, VCFtools (0.1.10 +), Plink (1.07 +). ###Pipeline
@@ -12,7 +26,7 @@ Java (1.6 +), Python (2.4 +), bwa (0.7 +) and/or bowtie (1.0.0 or 2.0.9), samtoo
 
 ###Synopsis
 
-``` bashalea phaseVCF hapsDIR unphased.vcf outputDIRalea createGenome reference.fasta phased.vcf.gz strain1 strain2 outputDiralea createGenome -snps-indels-separately reference.fasta phased_snps.vcf.gz phased_indels.vcf.gz strain1 strain2 outputDiralea alignReads -s reads.fastq  genome_concat.fasta  strain1  strain2  outputPrefixalea alignReads -p reads_1.fastq reads_2.fastq  genome_concat.fasta  strain1  strain2  outputPrefixalea createTracks <-s/-p> bamPrefix strain1 strain2 genome1.refmap genome2.refmap chrom.sizes outputDIR```##	InstallationTo start, download the latest [ALEA package](bin/alea.1.2.2.tar.gz) and extract using: 
+``` bashalea phaseVCF hapsDIR unphased.vcf outputDIRalea createGenome reference.fasta phased.vcf.gz strain1 strain2 outputDiralea createGenome -snps-indels-separately reference.fasta phased_snps.vcf.gz phased_indels.vcf.gz strain1 strain2 outputDiralea alignReads -s reads.fastq  genome_concat.fasta  strain1  strain2  outputPrefixalea alignReads -p reads_1.fastq reads_2.fastq  genome_concat.fasta  strain1  strain2  outputPrefixalea createTracks <-s/-p> bamPrefix strain1 strain2 genome1.refmap genome2.refmap chrom.sizes outputDIR```##	InstallationTo start, download the latest [ALEA package](dist/alea.1.2.2.tar.gz) and extract using: 
 
 ```bash
 tar xzf alea.1.2.tar.gz
