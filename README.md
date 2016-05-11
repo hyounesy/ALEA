@@ -18,6 +18,7 @@ sequencing data (ChIP-seq, RNA-seq, etc.) that takes the raw sequencing data and
     * [Human skin fibroblast](#example-1-human-skin-fibroblast) 
     * [Mouse trophoblast](#example2-mouse-trophoblast)
   * [Using SHAPEIT2](#using-shapeit2-for-genotype-phasing)
+  * [Credits](#credits)
   
 ##	Quick Reference
 ###Dependencies
