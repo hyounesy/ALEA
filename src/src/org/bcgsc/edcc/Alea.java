@@ -1,20 +1,6 @@
 package org.bcgsc.edcc;
 
 import java.io.*;
-import java.util.List;
-
-import org.broad.igv.feature.genome.FastaIndexedSequence;
-import org.broad.igv.feature.genome.FastaUtils;
-import org.broad.igv.feature.genome.Genome;
-import org.broad.igv.tools.IgvTools;
-import org.broad.igv.track.Track;
-import org.broad.igv.track.TrackLoader;
-import org.broad.igv.util.ResourceLocator;
-import org.broad.igv.variant.VariantTrack;
-import org.broad.igv.variant.vcf.VCFGenotype;
-import org.broad.igv.variant.vcf.VCFVariant;
-import org.broad.tribble.Feature;
-import org.junit.Test;
 
 /**
  * Example
@@ -71,11 +57,11 @@ public class Alea {
         
         String sInputBam1   = null;
         String sInputBam2   = null;
-        String sInputFasta1 = null;
-        String sInputFasta2 = null;
-        String sOutputBam1  = null;
-        String sOutputBam2  = null;
-        String sOutputStatsDir = null;
+//        String sInputFasta1 = null;
+//        String sInputFasta2 = null;
+//        String sOutputBam1  = null;
+//        String sOutputBam2  = null;
+//        String sOutputStatsDir = null;
         
         String sInputWig    = null;
         String sInputRefMap = null;
@@ -116,13 +102,13 @@ public class Alea {
 //                        sample = tokens[1];
 //                    } else if (key.equals("out")) {
 //                        out = tokens[1];
-//                    } else if (key.equals("chr")) {
-//                        chr = tokens[1];
-//                    } else if (key.equals("start")) {
-//                        start = tokens[1];
-//                    } else if (key.equals("end")) {
-//                        end = tokens[1];
-                    if (key.equals("--input-fasta")) {
+                    if (key.equals("--chr")) {
+                        sChrom = tokens[1];
+                    } else if (key.equals("--start")) {
+                        sStartPos = tokens[1];
+                    } else if (key.equals("--end")) {
+                        sEndPos = tokens[1];
+                    } else if (key.equals("--input-fasta")) {
                         sInputFasta = tokens[1];
                     } else if (key.equals("--input-vcf")) {
                         sInputVCF = tokens[1];
@@ -134,16 +120,16 @@ public class Alea {
                         sInputBam1 = tokens[1];
                     } else if (key.equals("--input-bam2")) {
                         sInputBam2 = tokens[1];
-                    } else if (key.equals("--input-fasta1")) {
-                        sInputFasta1 = tokens[1];
-                    } else if (key.equals("--input-fasta2")) {
-                        sInputFasta2 = tokens[1];
-                    } else if (key.equals("--output-bam1")) {
-                        sOutputBam1 = tokens[1];
-                    } else if (key.equals("--output-bam2")) {
-                        sOutputBam2 = tokens[1];
-                    } else if (key.equals("--output-stats-dir")) {
-                        sOutputStatsDir = tokens[1];
+//                    } else if (key.equals("--input-fasta1")) {
+//                        sInputFasta1 = tokens[1];
+//                    } else if (key.equals("--input-fasta2")) {
+//                        sInputFasta2 = tokens[1];
+//                    } else if (key.equals("--output-bam1")) {
+//                        sOutputBam1 = tokens[1];
+//                    } else if (key.equals("--output-bam2")) {
+//                        sOutputBam2 = tokens[1];
+//                    } else if (key.equals("--output-stats-dir")) {
+//                        sOutputStatsDir = tokens[1];
                     } else if (key.equals("--input-wig")) {
                         sInputWig = tokens[1];
                     } else if (key.equals("--input-refmap")) {
@@ -162,7 +148,8 @@ public class Alea {
                 }
             } if (bFilter) {
                 if (checkForParameters(sInputBam1 != null && sInputBam2 != null)) {
-                    BAMAnalyzer.filterReads(sInputBam1, sInputBam2, sInputFasta1, sInputFasta2, sOutputBam1, sOutputBam2, sOutputStatsDir);
+                    System.out.println("[ALEA] Error: Unsupported function: filter");
+                    //BAMAnalyzer.filterReads(sInputBam1, sInputBam2, sInputFasta1, sInputFasta2, sOutputBam1, sOutputBam2, sOutputStatsDir);
                 }
             } else if (bProject) {
                 if (checkForParameters(sInputWig != null && sInputRefMap != null && sOutputBedGraph != null)) {
