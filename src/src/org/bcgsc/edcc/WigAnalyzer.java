@@ -5,9 +5,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import org.broad.igv.tools.parsers.WiggleParser;
 import org.broad.igv.track.TrackType;
 import org.broad.igv.tools.parsers.DataConsumer;
+import org.broad.igv.tools.parsers.ToolsWiggleParser;
 
 /**
  * Utility functions to analyze wig files
@@ -146,10 +146,10 @@ public class WigAnalyzer
         //ResourceLocator locator = new ResourceLocator(wigPath);
         
         WigMapper wigMapper = new WigMapper(inputRefMap, outputBedGraph);
-        WiggleParser wigParser = new WiggleParser(inputWig, wigMapper, null);
+        ToolsWiggleParser wigParser = new ToolsWiggleParser(inputWig, wigMapper, null);
         try {
             wigParser.parse();
-        } catch (IOException e) {
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }

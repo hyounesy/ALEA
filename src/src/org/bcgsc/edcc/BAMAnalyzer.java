@@ -1,5 +1,7 @@
 package org.bcgsc.edcc;
 
+import htsjdk.samtools.SAMFileWriterImpl;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -11,13 +13,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import net.sf.samtools.BAMFileWriter;
-import net.sf.samtools.SAMFileWriterImpl;
-
 import org.broad.igv.feature.genome.FastaIndexedSequence;
-import org.broad.igv.sam.SamAlignment;
 import org.broad.igv.sam.Alignment;
-import org.broad.igv.sam.SAMWriter;
+import org.broad.igv.sam.PicardAlignment;
 import org.broad.igv.sam.reader.SAMReader;
 
 public class BAMAnalyzer {
@@ -70,10 +68,10 @@ public class BAMAnalyzer {
 
         // prepare BAM readers TODO: check for IO errors
         SAMReader samReader1 = new SAMReader(inputBam1, false);
-        Iterator<Alignment> alignIter1 = samReader1.iterator();
+        Iterator<PicardAlignment> alignIter1 = samReader1.iterator();
 
         SAMReader samReader2 = new SAMReader(inputBam2, false);
-        Iterator<Alignment> alignIter2 = samReader2.iterator();
+        Iterator<PicardAlignment> alignIter2 = samReader2.iterator();
 
         // prepare BAM writers TODO: check for IO errors
         SAMFileWriterImpl writer1 = null;

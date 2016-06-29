@@ -1,5 +1,7 @@
 package org.bcgsc.edcc;
 
+import htsjdk.tribble.Feature;
+
 import java.util.List;
 
 import org.broad.igv.feature.genome.FastaIndexedSequence;
@@ -11,7 +13,6 @@ import org.broad.igv.util.ResourceLocator;
 import org.broad.igv.variant.VariantTrack;
 import org.broad.igv.variant.vcf.VCFGenotype;
 import org.broad.igv.variant.vcf.VCFVariant;
-import org.broad.tribble.Feature;
 
 /**
  * Example
