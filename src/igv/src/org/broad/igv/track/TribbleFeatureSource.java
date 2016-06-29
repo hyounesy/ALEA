@@ -28,20 +28,26 @@ package org.broad.igv.track;
 import org.broad.igv.Globals;
 import org.broad.igv.data.AbstractDataSource;
 import org.broad.igv.data.DataTile;
-import org.broad.igv.feature.BasicFeature;
+import org.broad.igv.exceptions.DataLoadException;
 import org.broad.igv.feature.*;
 import org.broad.igv.feature.genome.Genome;
+import org.broad.igv.feature.genome.GenomeManager;
 import org.broad.igv.feature.tribble.*;
+import org.broad.igv.sam.reader.AlignmentIndexer;
+import org.broad.igv.tools.IgvTools;
 import org.broad.igv.ui.IGV;
 import org.broad.igv.ui.panel.ReferenceFrame;
 import org.broad.igv.ui.util.IndexCreatorDialog;
+import org.broad.igv.ui.util.MessageUtils;
 import org.broad.igv.util.FileUtils;
 import org.broad.igv.util.ResourceLocator;
 import org.broad.igv.util.RuntimeUtils;
 import org.broad.igv.util.collections.CollUtils;
 import org.broad.igv.variant.VariantTrack;
+
 import htsjdk.tribble.*;
 import htsjdk.tribble.index.Index;
+import htsjdk.tribble.index.IndexFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,7 +89,20 @@ abstract public class TribbleFeatureSource implements org.broad.igv.track.Featur
                 (VariantTrack.isVCF(locator.getTypeString()) && size > tenMB) || size > oneGB;
         if (!Globals.isHeadless() && locator.isLocal() && !locator.getPath().endsWith(".gz") && !indexExists) {
             if (size > tenMB) {
-                createIndex(locator, indexRequired);   // Note, might return null.
+                
+                if (locator.getPath().toLowerCase().endsWith(".sam")) {
+                    //TBD
+                    //AlignmentIndexer indexer = AlignmentIndexer.getInstance(new File(locator.getPath()), progressBar, this);
+                    //return indexer.createSamIndex(idxFile, 16000);
+                } else if (CodecFactory.hasCodec(new ResourceLocator(locator.getPath()), null)) {
+                    System.out.println("Creating index file " + idxPath + "...");
+                    int binSize = IgvTools.LINEAR_BIN_SIZE;
+                    Index index = IndexFactory.createLinearIndex(new File(locator.getPath()), codec, binSize);
+                    if (index != null) {
+                        IgvTools.writeTribbleIndex(index, new File(idxPath).getAbsolutePath());
+                    }
+                }
+                //createIndex(locator, indexRequired);   // Note, might return null.
             }
         }
 
