@@ -7,6 +7,8 @@ popd > /dev/null
 source $AL_DIR_TOOLS/alea.config
 
 
+if [ $AL_USE_BISMARK = 0 ]; then
+
 if test $# -ne 8
 then
     echo "
@@ -36,6 +38,42 @@ Output:
          outputDIR/outputPrefix_strain2.wig.gz    unprojected read profiles for strain1 and strain2
 "
 exit 1
+fi
+
+else #[ $AL_USE_BISMARK = 1 ]
+
+if test $# -ne 9
+then
+    echo "
+Usage:   
+         alea createTracks <-s/-p> bamPrefix strain1 strain2 genome1.refmap genome2.refmap chrom.sizes outputDIR
+         
+Options:
+         -s to create tracks for the single-end aligned reads
+         -p to create tracks for the paired-end aligned reads
+
+         bamPrefix      prefix used for the output of alignReads command
+         strain1        name of strain1 (e.g. hap1)
+         strain2        name of strain2 (e.g. hap2)
+         genome1.refmap path to the refmap file created for insilico genome 1
+         genome1.refmap path to the refmap file created for insilico genome 2
+         chrom.sizes    path to the chromosome size file (required for creating .bw)
+         referenceDIR   path to the genome folder (required for calling methylation)
+         outputDIR      output directory (where to create track files)
+         
+Output:
+         outputDIR/outputPrefix_strain1.bedGraph
+         outputDIR/outputPrefix_strain1.bw        read profiles for strain1 projected to reference genome
+         
+         outputDIR/outputPrefix_strain2.bedGraph 
+         outputDIR/outputPrefix_strain2.bw        read profiles for strain2 projected to reference genome
+         
+         outputDIR/outputPrefix_strain1.wig.gz
+         outputDIR/outputPrefix_strain2.wig.gz    unprojected read profiles for strain1 and strain2
+"
+exit 1
+fi
+
 fi
 
 ##############################################################################
@@ -111,6 +149,114 @@ function projectToReferenceGenome {
     printProgress "Finished projectToReferenceGenome"
 }
 
+### merge a cytosine report into a CpG site report
+function mergeTwoStrandMethylation {
+    local PARAM_CYTESINE_REPORT_FILE=$1
+    local PARAM_SITE_REPORT_FILE=$2
+    
+    aleaCheckFileExists "$PARAM_CYTESINE_REPORT_FILE"
+
+    printProgress "Started mergeTwoStrandMethylation"
+
+    awk '
+        BEGIN{
+            FS = "\t"
+            OFS = "\t"
+            
+            FIRST_POS = 0
+            FIRST_METHYL = 0
+            FIRST_UNMETHYL = 0
+            METHYL = 0
+            UNMETHYL = 0
+            FIRST_TRI = ""
+        }
+        $3 == "+"{
+            FIRST_POS = $2
+            FIRST_METHYL = $4
+            FIRST_UNMETHYL = $5
+            FIRST_TRI = $7
+        }
+        $3 == "-"{
+            if ($2 == FIRST_POS + 1) {
+                METHYL = FIRST_METHYL + $4
+                UNMETHYL = FIRST_UNMETHYL + $5
+                
+                if (METHYL + UNMETHYL > 0) {
+                    printf $1 "\t" FIRST_POS "\t" $2 "\t"
+                    printf "%6f\t", METHYL / (METHYL + UNMETHYL) * 100.0
+                    print METHYL, UNMETHYL, $6, FIRST_TRI
+                }
+                else {
+                    print $1, FIRST_POS, $2, "NA", METHYL, UNMETHYL, $6, FIRST_TRI
+                }
+            }
+            FIRST_POS = 0
+            FIRST_METHYL = 0
+            FIRST_UNMETHYL = 0
+            FIRST_TRI = ""
+            METHYL = 0
+            UNMETHYL = 0
+        }
+    ' "$PARAM_CYTESINE_REPORT_FILE" > "$PARAM_SITE_REPORT_FILE"
+    
+    printProgress "Finished mergeTwoStrandMethylation"
+}
+
+### detect the allelic cytosines in the concatenated genome method
+function detectAllelicCytoConcatenated {
+    
+    printProgress "Started detectAllelicCytoConcatenated"
+
+    local PARAM_INPUT_METHYL=$1
+    local PARAM_STRAIN=$2
+    local PARAM_OUT_PREFIX=$3
+    
+    aleaCheckFileExists "$PARAM_INPUT_METHYL"
+    
+    cat "$PARAM_INPUT_METHYL" \
+        | awk -v ref="$PARAM_STRAIN" '($0 ~ ref) {print $0}' \
+        | sed 's/'"$PARAM_STRAIN"'_chr//g' \
+        >> "$PARAM_OUT_PREFIX".CpG_report.txt
+    
+    printProgress "Finished detectAllelicCytoConcatenated"
+}
+
+### convert a CpG site report into a Wig
+function convertMethylationToWig {
+    local PARAM_SITE_REPORT_FILE=$1
+    local PARAM_WIG_FILE=$2
+
+    local VAR_MIN_DEPTH=$AL_METH2WIG_PARAM_MIN_DEPTH
+    
+    aleaCheckFileExists "$PARAM_SITE_REPORT_FILE"
+
+    printProgress "Started convertMethylationToWig"
+
+    awk -v MIN_DEPTH=$VAR_MIN_DEPTH '
+        BEGIN{
+            FS = "\t"
+            OFS = "\t"
+            
+            if (MIN_DEPTH < 1)
+                MIN_DEPTH = 1
+            
+            print "track type=wiggle_0"
+        }
+        $5 + $6 >= MIN_DEPTH{
+            if ($1 ~ /^chr/)
+                print "fixedStep chrom=" $1 " start=" $2 " step=1 span=1"
+            else
+                print "fixedStep chrom=chr" $1 " start=" $2 " step=1 span=1"
+	        for(i = 0; i < $3-$2+1; i++) {
+	        	print $4
+	        }
+        }
+    ' "$PARAM_SITE_REPORT_FILE" > "$PARAM_WIG_FILE"
+    
+    printProgress "Finished convertMethylationToWig"
+}
+
+
 VAR_OPTION=$1
 shift
 
@@ -122,6 +268,13 @@ shift
     PARAM_REFMAP_FILE2=$5
     PARAM_CHROM_SIZES=$6
     PARAM_OUTPUT_DIR=$7
+    if [ $AL_USE_BISMARK = 0 ]
+    then
+        PARAM_OUTPUT_DIR=$7
+    else
+        PARAM_REFERECE_DIR=$7
+        PARAM_OUTPUT_DIR=$8
+    fi
     
     aleaCheckFileExists "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1".bam
     aleaCheckFileExists "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2".bam
@@ -154,3 +307,64 @@ shift
     $AL_BIN_BEDGRAPH_TO_BW "$VAR_OUTPUT_PREFIX2".bedGraph "$PARAM_CHROM_SIZES" "$VAR_OUTPUT_PREFIX2".bw
 
 #}
+
+if [ $AL_USE_BISMARK = 1 ]; then
+#function generateAllelicMethylTracks {
+    aleaCheckFileExists "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+    aleaCheckDirExists "$PARAM_REFERECE_DIR"
+    
+    mv "$VAR_OUTPUT_PREFIX1".wig.gz "$VAR_OUTPUT_PREFIX1"_coverage.wig.gz
+    mv "$VAR_OUTPUT_PREFIX1".bedGraph "$VAR_OUTPUT_PREFIX1"_coverage.bedGraph
+    mv "$VAR_OUTPUT_PREFIX1".bw "$VAR_OUTPUT_PREFIX1"_coverage.bw
+    mv "$VAR_OUTPUT_PREFIX2".wig.gz "$VAR_OUTPUT_PREFIX2"_coverage.wig.gz
+    mv "$VAR_OUTPUT_PREFIX2".bedGraph "$VAR_OUTPUT_PREFIX2"_coverage.bedGraph
+    mv "$VAR_OUTPUT_PREFIX2".bw "$VAR_OUTPUT_PREFIX2"_coverage.bw
+    
+    if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
+    
+        samtools view -Sb -q 1 "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.bam
+        
+        if [ "$VAR_OPTION" = "-s" ]; then
+            $AL_BIN_BISMARK_EXTRACT -s --comprehensive --cytosine_report --genome_folder $PARAM_REFERECE_DIR "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.bam
+            
+        elif [ "$VAR_OPTION" = "-p" ]; then
+            $AL_BIN_BISMARK_EXTRACT -p --comprehensive --cytosine_report --genome_folder $PARAM_REFERECE_DIR "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.bam
+            
+        else
+            echo "Invalid option $VAR_OPTION"
+            exit 1
+        fi
+        
+        sort -k1,1 -k2,2n "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt.tmp
+        if [ $AL_DEBUG = 0 ]
+        then
+            rm "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt
+        else
+            mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.unsorted.txt
+        fi
+        mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt.tmp "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt
+        
+        detectAllelicCytoConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt "$PARAM_STRAIN1" "$VAR_OUTPUT_PREFIX1"
+        detectAllelicCytoConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt "$PARAM_STRAIN2" "$VAR_OUTPUT_PREFIX2"
+        
+        mergeTwoStrandMethylation "$VAR_OUTPUT_PREFIX1".CpG_report.txt "$VAR_OUTPUT_PREFIX1".CpG_site_report.txt
+        mergeTwoStrandMethylation "$VAR_OUTPUT_PREFIX2".CpG_report.txt "$VAR_OUTPUT_PREFIX2".CpG_site_report.txt
+        
+        convertMethylationToWig "$VAR_OUTPUT_PREFIX1".CpG_site_report.txt "$VAR_OUTPUT_PREFIX1"_methylation.wig
+        convertMethylationToWig "$VAR_OUTPUT_PREFIX2".CpG_site_report.txt "$VAR_OUTPUT_PREFIX2"_methylation.wig
+        
+        projectToReferenceGenome "$VAR_OUTPUT_PREFIX1"_methylation.wig "$PARAM_REFMAP_FILE1" "$VAR_OUTPUT_PREFIX1"_methylation.bedGraph
+        $AL_BIN_BEDGRAPH_TO_BW "$VAR_OUTPUT_PREFIX1"_methylation.bedGraph "$PARAM_CHROM_SIZES" "$VAR_OUTPUT_PREFIX1"_methylation.bw
+        
+        projectToReferenceGenome "$VAR_OUTPUT_PREFIX2"_methylation.wig "$PARAM_REFMAP_FILE2" "$VAR_OUTPUT_PREFIX2"_methylation.bedGraph
+        $AL_BIN_BEDGRAPH_TO_BW "$VAR_OUTPUT_PREFIX2"_methylation.bedGraph "$PARAM_CHROM_SIZES" "$VAR_OUTPUT_PREFIX2"_methylation.bw
+        
+    
+    else # [ $AL_USE_CONCATENATED_GENOME != 1 ] 
+    
+        echo -e "\nThe separate method using Bismark for alignment is not supported so far.\n"
+        exit 1
+    
+    fi
+#}
+fi
