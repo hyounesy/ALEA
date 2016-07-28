@@ -393,7 +393,7 @@ else # [ $AL_USE_CONCATENATED_GENOME != 1 ]
             aleaCheckFileExists "$PARAM_GENOME2".1.bt2
             $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME1" $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_all.sam
             $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME2" $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"_all.sam
-	elif [ $AL_USE_BISMARK = 1 ]; then
+	    elif [ $AL_USE_BISMARK = 1 ]; then
             echo -e "\nThe separate method using Bismark for alignment is not supported so far.\n"
             exit 1
             #aleaCheckDirExists "$PARAM_GENOME1"/Bisulfite_Genome
@@ -423,9 +423,10 @@ else # [ $AL_USE_CONCATENATED_GENOME != 1 ]
             aleaCheckFileExists "$PARAM_GENOME2".1.bt2
             $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME1" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2 > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_all.sam
             $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME2" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2 > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"_all.sam
-	elif [ $AL_USE_BISMARK = 1 ]; then
+	    elif [ $AL_USE_BISMARK = 1 ]; then
             echo -e "\nThe separate method using Bismark for alignment is not supported so far.\n"
-            exit 1aleaCheckDirExists "$PARAM_GENOME1"/Bisulfite_Genome
+            exit 1
+            #aleaCheckDirExists "$PARAM_GENOME1"/Bisulfite_Genome
             #aleaCheckDirExists "$PARAM_GENOME2"/Bisulfite_Genome
             #$AL_BIN_BISMARK $AL_BISMARK_ALN_PARAMS --basename "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_all "$PARAM_GENOME1" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2
             #mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_all_pe.sam "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_all.sam
