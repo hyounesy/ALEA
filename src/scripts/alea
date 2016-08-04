@@ -14,7 +14,10 @@ Contact: Hamid Younesy <hyounesy@bcgsc.ca>
 
 Usage:   alea <command> [options]
 
-Command: phaseVCF       creates phased VCF file from an unphased VCF and
+Command: setting        configure ALEA interactively and modifies confing
+                        (.setting and .config)
+                        
+         phaseVCF       creates phased VCF file from an unphased VCF and
                         haplotypes (.haps)
                         
          createGenome   creates insilico genome (.fasta) from a reference
@@ -33,6 +36,10 @@ then
     shift
     
     case $VAR_COMMAND in
+        setting)
+            $AL_DIR_TOOLS/setting.sh $@
+            ;;
+
         phaseVCF)
             $AL_DIR_TOOLS/phaseVCF.sh $@
             ;;
