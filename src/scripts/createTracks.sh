@@ -92,6 +92,42 @@ function convertBam2WigPE {
 }
 
 
+
+
+### converts bam to wig without BAM2WIG (JRA)
+function convertBam2Wigbedtools {
+    local PARAM_INPUT_PREFIX=$1
+    local PARAM_OUTPUT_DIR=$2
+
+    local VAR_q=$AL_BAM2WIG_PARAM_MIN_QUALITY     # min read quality [0]
+    local VAR_F=$AL_BAM2WIG_PARAM_FILTERING_FLAG  # filtering flag [0]
+    local VAR_INPUT_BASENAME=`basename $PARAM_INPUT_PREFIX`
+    
+    aleaCheckFileExists "$PARAM_INPUT_PREFIX".bam
+    $AL_BIN_SAMTOOLS view -bh -F $VAR_F -q $VAR_q "$PARAM_INPUT_PREFIX".bam > "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bam
+    $AL_BIN_BEDTOOLS genomecov -ibam "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bam -bg -split > "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bedGraph
+    awk '
+        BEGIN {
+                print "track type=wiggle_0"
+        }
+        NF == 4 {
+                print "fixedStep chrom="$1" start="$2+1" step=1 span=1"
+                for(i = 0; i < $3-$2; i++) {
+                        print $4
+                }
+        }' "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bedGraph > "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".wig
+    bgzip -c "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".wig > "$PARAM_INPUT_PREFIX".wig.gz
+}
+
+
+
+
+
+
+
+
+
+
 ### projects a wig profile to reference genome
 function projectToReferenceGenome {
     local PARAM_WIG_FILE=$1
