@@ -334,8 +334,21 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
             aleaCheckFileExists "$PARAM_GENOME".1.ebwt
             $AL_BIN_BOWTIE1 $AL_BOWTIE1_ALN_PARAMS "$PARAM_GENOME" $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
         elif [ $AL_USE_BOWTIE2 = 1 ]; then
-            aleaCheckFileExists "$PARAM_GENOME".1.bt2
+            aleaCheckFileExists "$PARAM_GENOME".1.bt2l
             $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME" $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+        		elif [ $AL_USE_TOPHAT2 = 1 ]; then
+            aleaCheckFileExists "$PARAM_GENOME".1.bt2l
+            $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS "$PARAM_GENOME" $PARAM_FASTQ_FILE1 > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+			mv ./tophat_out/accepted_hits.sam ./"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam               
+        elif [ $AL_USE_STAR_RNA = 1 ]; then
+            aleaCheckDirExists "$PARAM_GENOME"/
+            $AL_BIN_STAR --runMode alignReads --genomeDir "$PARAM_GENOME" $"AL_STAR_RNA_PARAMS --readFilesCommand zcat --readFilesIn $PARAM_FASTQ_FILE1
+            mv "Aligned.outsam "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+        elif [ $AL_USE_STAR_CHIP = 1 ]; then
+            aleaCheckDirExists "$PARAM_GENOME"/
+            $AL_BIN_STAR --runMode alignReads --genomeDir "$PARAM_GENOME" $"AL_STAR_CHIP_PARAMS --readFilesCommand zcat --readFilesIn $PARAM_FASTQ_FILE1
+            mv "Aligned.outsam "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+            
         fi
     else #[ $PARAM_SINGLE_READS = 0 ]
         #align paired-end reads to concatenated insilico genome
@@ -350,8 +363,21 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
             aleaCheckFileExists "$PARAM_GENOME".1.ebwt
             $AL_BIN_BOWTIE1 $AL_BOWTIE1_ALN_PARAMS "$PARAM_GENOME" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2 > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
         elif [ $AL_USE_BOWTIE2 = 1 ]; then
-            aleaCheckFileExists "$PARAM_GENOME".1.bt2
+            aleaCheckFileExists "$PARAM_GENOME".1.bt2l
             $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2 > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+        		elif [ $AL_USE_TOPHAT2 = 1 ]; then
+            aleaCheckFileExists "$PARAM_GENOME".1.bt2l
+            $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS "$PARAM_GENOME" $PARAM_FASTQ_FILE1 $PARAM_FASTQ_FILE2 > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+			mv ./tophat_out/accepted_hits.sam ./"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam         
+        elif [ $AL_USE_STAR_RNA = 1 ]; then
+            aleaCheckDirExists "$PARAM_GENOME"/
+            $AL_BIN_STAR --runMode alignReads --genomeDir "$PARAM_GENOME" "$AL_STAR_RNA_PARAMS" --readFilesCommand zcat --readFilesIn $PARAM_FASTQ_FILE1 $PARAM_FASTQ_FILE2
+            mv "Aligned.outsam "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+        elif [ $AL_USE_STAR_CHIP = 1 ]; then
+            aleaCheckDirExists "$PARAM_GENOME"/
+            $AL_BIN_STAR --runMode alignReads --genomeDir "$PARAM_GENOME" "$AL_STAR_CHIP_PARAMS" --readFilesCommand zcat --readFilesIn $PARAM_FASTQ_FILE1 $PARAM_FASTQ_FILE2
+            mv "Aligned.outsam "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+        
         fi
     fi
     
