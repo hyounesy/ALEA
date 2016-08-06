@@ -81,6 +81,15 @@ function createFastaIndex {
     elif [ $AL_USE_BOWTIE2 = 1 ]; then
         aleaCreateDir "$PARAM_OUTPUT_DIR"/bowtie2-index
         $AL_BIN_BOWTIE2_INDEX "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"$PARAM_STRAIN"
+    elif [ $AL_USE_TOPHAT2 = 1 ]; then
+        aleaCreateDir "$PARAM_OUTPUT_DIR"/bowtie2-index
+        $AL_BIN_BOWTIE2_INDEX "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"$PARAM_STRAIN"   
+    elif [ $AL_USE_STAR = 1 ]; then
+        aleaCreateDir "$PARAM_OUTPUT_DIR"/STAR-index
+        $AL_BIN_STAR --runThreadN 12 --runMode --genomeGenerate --genomeDir "$PARAM_OUTPUT_DIR" --genomeFastaFile "$PARAM_FASTA" -sjdbOverhang 100
+
+        
+        
     fi
 
     printProgress "[createFastaIndex] Done"
