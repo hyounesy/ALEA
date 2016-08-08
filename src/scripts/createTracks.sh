@@ -376,7 +376,7 @@ fi
 # output zipped wig for projection to reference
 ###
 function convertBam2Wigbedtools {
-    printProgress "Started detectAllelicCytoConcatenated"
+    printProgress "Started convertBam2Wigbedtools"
     local PARAM_INPUT_PREFIX=$1
     local PARAM_OUTPUT_DIR=$2
         
