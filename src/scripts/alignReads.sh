@@ -259,8 +259,8 @@ function detectAllelicConcatenated {
     $AL_BIN_SAMTOOLS sort "$PARAM_OUT_PREFIX".unsorted.bam "$PARAM_OUT_PREFIX" 
     
     # get flagstats
-    echo "flagstats on "$PARAM_OUT_PREFIX".bam" >> flagstats.tsv
-    $AL_BIN_SAMTOOLS flagstats "$PARAM_OUT_PREFIX".bam >> flagstats.tsv
+    echo "flagstats on "$PARAM_OUT_PREFIX".bam" >> $AL_LOG/flagstats.tsv
+    $AL_BIN_SAMTOOLS flagstats "$PARAM_OUT_PREFIX".bam >> $AL_LOG/flagstats.tsv
     
     if [ -f "$PARAM_OUT_PREFIX".bam ]
     then
