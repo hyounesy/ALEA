@@ -445,6 +445,7 @@ fi
 
 
 # unfinished functions for counting allelic reads
+#test
 function countReads {
     
     printProgress "[countReads] Started"
