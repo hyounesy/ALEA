@@ -371,18 +371,20 @@ fi
 
 
 
-### converts bam to wig without BAM2WIG (JRA)
+### converts bam to wig using bedtools (circumventing BAM2WIG) -JRA
+# input sorted bam and filter variables
+# output zipped wig for projection to reference
+###
 function convertBam2Wigbedtools {
+    printProgress "Started detectAllelicCytoConcatenated"
     local PARAM_INPUT_PREFIX=$1
-    local PARAM_OUTPUT_DIR=$2
-
     local VAR_q=$AL_BAM2WIG_PARAM_MIN_QUALITY     # min read quality [0]
     local VAR_F=$AL_BAM2WIG_PARAM_FILTERING_FLAG  # filtering flag [0]
-    local VAR_INPUT_BASENAME=`basename $PARAM_INPUT_PREFIX`
-    
     aleaCheckFileExists "$PARAM_INPUT_PREFIX".bam
-    $AL_BIN_SAMTOOLS view -bh -F $VAR_F -q $VAR_q "$PARAM_INPUT_PREFIX".bam > "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bam
+    
+    $AL_BIN_SAMTOOLS view -bh -F $VAR_F -q $VAR_q "VAR_INPUT_BASENAME".bam > "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bam
     $AL_BIN_BEDTOOLS genomecov -ibam "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bam -bg -split > "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bedGraph
+    
     awk '
         BEGIN {
                 print "track type=wiggle_0"
