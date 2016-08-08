@@ -378,6 +378,8 @@ fi
 function convertBam2Wigbedtools {
     printProgress "Started detectAllelicCytoConcatenated"
     local PARAM_INPUT_PREFIX=$1
+    local PARAM_OUTPUT_DIR=$2
+        
     local VAR_q=$AL_BAM2WIG_PARAM_MIN_QUALITY     # min read quality [0]
     local VAR_F=$AL_BAM2WIG_PARAM_FILTERING_FLAG  # filtering flag [0]
     aleaCheckFileExists "$PARAM_INPUT_PREFIX".bam
