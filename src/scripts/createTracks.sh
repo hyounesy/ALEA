@@ -404,25 +404,35 @@ function convertBam2Wigbedtools {
 # counts allelic reads over exons and aggregates over genes
 ### output table with allelic read counts
 function countAllelicReads {
-    
-    printProgress "[countAllelicReads] Started" | tee $AL_LOG/log.tsv
+    printProgress "[countAllelicReads] Started" | tee "$AL_LOG"/log.tsv
     local PARAM_PROJECTED_BEDGRAPH=$1
     local PARAM_EXON_COORDINATES=$2
     local PARAM_GENE_COORDINATES=$3
-    
-    echo "Input files "$PARAM_PROJECTED_BEDGRAPH"_"$REF".bedGraph and "$PARAM_PROJECTED_BEDGRAPH"_"$ALT".bedGraph >> $AL_LOG/log.tsv
-    echo "Using exon coordinate file $PARAM_EXON_COORDINATES" >> $AL_LOG/log.tsv
-    echo "And gene coordinate file $PARAM_GENE_COORDINATES" >> $AL_LOG/log.tsv
-    
-    bedtools intersect -a "$PARAM_PROJECTED_BEDGRAPH"_"$REF" -b "$PARAM_EXON_COORDINATES" > "$READS_OVERLAPPING_EXONS"_"$REF".bedGraph
-    bedtools coverage -a "$READS_OVERLAPPING_EXONS"_"$REF".bedGraph -b "$PARAM_GENE_COORDINATES" > "$PARAM_PROJECTED_BEDGRAPH"_"$REF"_count.tsv
-    bedtools intersect -a "$PARAM_PROJECTED_BEDGRAPH"_"$ALT" -b "$PARAM_EXON_COORDINATES" > "$READS_OVERLAPPING_EXONS"_"$ALT".bedGraph
-    bedtools coverage -a "$READS_OVERLAPPING_EXONS"_"$ALT".bedGraph -b "$PARAM_GENE_COORDINATES" > "$PARAM_PROJECTED_BEDGRAPH"_"$ALT"_count.tsv
+    local REF="C57BL6J"
+    local ALT="CAST_EiJ"
 
+    echo "Input allelic bedGraphs: "$PARAM_PROJECTED_BEDGRAPH"_"$REF".bedGraph and "$PARAM_PROJECTED_BEDGRAPH"_"$ALT".bedGraph (must be projected onto reference)" >> "$AL_LOG"/log.tsv
+    echo "Using exon coordinate file: $PARAM_EXON_COORDINATES (please ensure no duplicate exons are present in file)" >> "$AL_LOG"/log.tsv
+    echo "And gene coordinate file: $PARAM_GENE_COORDINATES" >> "$AL_LOG"/log.tsv
 
-    echo "[countAllelicReads] Ended" >> log.tsv
-    echo date >> log.tsv
+    bedtools intersect -a "$PARAM_PROJECTED_BEDGRAPH"_"$REF".bedGraph -b "$PARAM_EXON_COORDINATES" > READS_OVERLAPPING_EXONS_"$REF".bedGraph
+    bedtools coverage -a "$PARAM_GENE_COORDINATES" -b READS_OVERLAPPING_EXONS_"$REF".bedGraph > "$PARAM_PROJECTED_BEDGRAPH"_"$REF"_count_tmp.tsv
+    rm READS_OVERLAPPING_EXONS_"$REF".bedGraph
+
+    bedtools intersect -a "$PARAM_PROJECTED_BEDGRAPH"_"$ALT".bedGraph -b "$PARAM_EXON_COORDINATES" > READS_OVERLAPPING_EXONS_"$ALT".bedGraph
+    bedtools coverage -a "$PARAM_GENE_COORDINATES" -b READS_OVERLAPPING_EXONS_"$ALT".bedGraph > "$PARAM_PROJECTED_BEDGRAPH"_"$ALT"_count_tmp.tsv
+    rm READS_OVERLAPPING_EXONS_"$ALT".bedGraph
+
+    echo "#chr  start   end     ID      name    "$REF"" > tmp1.tsv
+    awk 'OFS="\t" {print $1, $2, $3, $4, $5, $6}' "$PARAM_PROJECTED_BEDGRAPH"_"$REF"_count_tmp.tsv >> tmp1.tsv
+    echo ""$ALT"" > tmp2.tsv
+    cut -f6 "$PARAM_PROJECTED_BEDGRAPH"_"$ALT"_count_tmp.tsv >> tmp2.tsv
+    cut -f1 tmp2.tsv | paste tmp1.tsv - > "$PARAM_PROJECTED_BEDGRAPH"_allelic_read_counts.tsv
+    rm tmp1.tsv tmp2.tsv "$PARAM_PROJECTED_BEDGRAPH"_"$REF"_count_tmp.tsv "$PARAM_PROJECTED_BEDGRAPH"_"$ALT"_count_tmp.tsv
+
+    echo "[countAllelicReads] Ended" >> "$AL_LOG"/log.tsv
+    date >> "$AL_LOG"/log.tsv
 }
 
-countAllelicReads "$PARAM_INPUT_BEDGRAPH" "$PARAM_EXON_COORDINATES" "$PARAM_GENE_COORDINATES"
+countAllelicReads BC_ICM_H3K36me3 Refseq_exon_mm10.bed Refseq_gene_mm10.bed
 
