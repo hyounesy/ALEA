@@ -405,7 +405,7 @@ function convertBam2Wigbedtools {
 ### output table with allelic read counts
 function countAllelicReads {
     
-#    printProgress "[countAllelicReads] Started" | tee "$AL_LOG"/log.tsv
+    printProgress "[countAllelicReads] Started" | tee "$AL_LOG"/gene_stats_log.tsv
     local PARAM_PROJECTED_BEDGRAPH=$1
     local PARAM_EXON_COORDINATES=$2
     local PARAM_GENE_COORDINATES=$3
@@ -413,9 +413,9 @@ function countAllelicReads {
     local ALT="CAST_EiJ"
     local AL_LOG="."
 
-    echo "Input allelic bedGraphs: "$PARAM_PROJECTED_BEDGRAPH"_"$REF".bedGraph and "$PARAM_PROJECTED_BEDGRAPH"_"$ALT".bedGraph (must be projected onto reference)" >> "$AL_LOG"/log.tsv
-    echo "Using exon coordinate file: $PARAM_EXON_COORDINATES (please ensure no duplicate exons are present in file)" >> "$AL_LOG"/log.tsv
-    echo "And gene coordinate file: $PARAM_GENE_COORDINATES" >> "$AL_LOG"/log.tsv
+    echo "Input allelic bedGraphs: "$PARAM_PROJECTED_BEDGRAPH"_"$REF".bedGraph and "$PARAM_PROJECTED_BEDGRAPH"_"$ALT".bedGraph (must be projected onto reference)" >> "$AL_LOG"/gene_stats_log.tsv
+    echo "Using exon coordinate file: $PARAM_EXON_COORDINATES (please ensure no duplicate exons are present in file)" >> "$AL_LOG"/gene_stats_log.tsv
+    echo "And gene coordinate file: $PARAM_GENE_COORDINATES" >> "$AL_LOG"/gene_stats_log.tsv
 
 
 
@@ -434,8 +434,8 @@ function countAllelicReads {
     cut -f1 tmp2.tsv | paste tmp1.tsv - > "$PARAM_PROJECTED_BEDGRAPH"_allelic_read_counts.tsv
     rm tmp1.tsv tmp2.tsv "$PARAM_PROJECTED_BEDGRAPH"_"$REF"_count_tmp.tsv "$PARAM_PROJECTED_BEDGRAPH"_"$ALT"_count_tmp.tsv
 
-    echo "[countAllelicReads] Ended" >> "$AL_LOG"/log.tsv
-    date >> "$AL_LOG"/log.tsv
+    echo "[countAllelicReads] Ended" >> "$AL_LOG"/gene_stats_log.tsv
+    date >> "$AL_LOG"/gene_stats_log.tsv
 }
 
 countAllelicReads BC_ICM_H3K36me3 Refseq_exon_mm10.bed Refseq_VisRseq_Genes_mm10.bed
@@ -458,6 +458,8 @@ function calculateTotalRPKM {
     aleaCheckFileExists "$PARAM_INPUT_PREFIX".bam
     
     $AL_BIN_SAMTOOLS view -bh -F $VAR_F -q $VAR_q "VAR_INPUT_BASENAME".bam > "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bam
+    #get scaling factor
+    $AL_BIN_SAMTOOLS view -c "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bam
     $AL_BIN_BEDTOOLS genomecov -ibam "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bam -bg -split > "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bedGraph
     
 }
