@@ -371,15 +371,14 @@ fi
 
 
 
-### converts bam to wig using bedtools (circumventing BAM2WIG) -JRA
+### converts bam to wig using bedtools (circumventing BAM2WIG)
 # input sorted bam and filter variables
 # output zipped wig for projection to reference
 ###
 function convertBam2Wigbedtools {
     printProgress "Started convertBam2Wigbedtools"
     local PARAM_INPUT_PREFIX=$1
-    local PARAM_OUTPUT_DIR=$2
-        
+
     local VAR_q=$AL_BAM2WIG_PARAM_MIN_QUALITY     # min read quality [0]
     local VAR_F=$AL_BAM2WIG_PARAM_FILTERING_FLAG  # filtering flag [0]
     aleaCheckFileExists "$PARAM_INPUT_PREFIX".bam
@@ -399,3 +398,23 @@ function convertBam2Wigbedtools {
         }' "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bedGraph > "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".wig
     bgzip -c "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".wig > "$PARAM_INPUT_PREFIX".wig.gz
 }
+
+
+# unfinished functions for counting allelic reads
+#test
+function countAllelicReads {
+    
+    printProgress "[countAllelicReads] Started" | tee $AL_LOG/log.tsv
+    local PARAM_PROJECTED_BEDGRAPH=$1
+    local PARAM_EXON_COORDINATES=$2
+    local PARAM_GENE_COORDINATES=$3
+    
+    echo "Input file $PARAM_PROJECTED_BEDGRAPH" >> $AL
+    
+    bedtools intersect -a "$PARAM_PROJECTED_BEDGRAPH" -b "$PARAM_EXON_COORDINATES" > "$READS_OVERLAPPING_EXONS".bedGraph
+    bedtools coverage -a "$READS_OVERLAPPING_EXONS".bedGraph -b "$PARAM_GENE_COORDINATES" > "$"
+	
+}
+
+countAllelicReads "$PARAM_INPUT_BEDGRAPH" "$PARAM_EXON_COORDINATES" "$PARAM_GENE_COORDINATES"
+
