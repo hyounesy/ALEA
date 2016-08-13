@@ -435,19 +435,3 @@ else # [ $AL_USE_CONCATENATED_GENOME != 1 ]
     detectAllelicSeparate "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_all.sam "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"_all.sam "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
 
 fi    
-
-
-# unfinished functions for counting allelic reads
-#test
-function countReads {
-    
-    printProgress "[countReads] Started"
-    local PARAM_INPUT_BEDGRAPH=$1
-    local PARAM_EXON_COORDINATES=$2
-    local PARAM_GENE_COORDINATES=$3
-    bedtools intersect -a "$PARAM_INPUT_BEDGRAPH" -b "$PARAM_EXON_COORDINATES" > "$READS_OVERLAPPING_EXONS".bedGraph
-    bedtools coverage -a "$READS_OVERLAPPING_EXONS".bedGraph -b "$PARAM_GENE_COORDINATES" > "$"
-    
-if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
-	countReads "$PARAM_INPUT_BEDGRAPH" "$PARAM_EXON_COORDINATES" "$PARAM_GENE_COORDINATES"
-fi
