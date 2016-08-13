@@ -371,10 +371,10 @@ fi
 
 
 
-### converts bam to wig using bedtools (circumventing BAM2WIG)
+### converts SORTED bam into wig format using bedtools (circumventing BAM2WIG)
 # input sorted bam and filter variables
-# output zipped wig for projection to reference
-###
+### output zipped wig for projection to reference
+
 function convertBam2Wigbedtools {
     printProgress "Started convertBam2Wigbedtools"
     local PARAM_INPUT_PREFIX=$1
@@ -404,16 +404,20 @@ function convertBam2Wigbedtools {
 # counts allelic reads over exons and aggregates over genes
 ### output table with allelic read counts
 function countAllelicReads {
-    printProgress "[countAllelicReads] Started" | tee "$AL_LOG"/log.tsv
+    
+#    printProgress "[countAllelicReads] Started" | tee "$AL_LOG"/log.tsv
     local PARAM_PROJECTED_BEDGRAPH=$1
     local PARAM_EXON_COORDINATES=$2
     local PARAM_GENE_COORDINATES=$3
     local REF="C57BL6J"
     local ALT="CAST_EiJ"
+    local AL_LOG="."
 
     echo "Input allelic bedGraphs: "$PARAM_PROJECTED_BEDGRAPH"_"$REF".bedGraph and "$PARAM_PROJECTED_BEDGRAPH"_"$ALT".bedGraph (must be projected onto reference)" >> "$AL_LOG"/log.tsv
     echo "Using exon coordinate file: $PARAM_EXON_COORDINATES (please ensure no duplicate exons are present in file)" >> "$AL_LOG"/log.tsv
     echo "And gene coordinate file: $PARAM_GENE_COORDINATES" >> "$AL_LOG"/log.tsv
+
+
 
     bedtools intersect -a "$PARAM_PROJECTED_BEDGRAPH"_"$REF".bedGraph -b "$PARAM_EXON_COORDINATES" > READS_OVERLAPPING_EXONS_"$REF".bedGraph
     bedtools coverage -a "$PARAM_GENE_COORDINATES" -b READS_OVERLAPPING_EXONS_"$REF".bedGraph > "$PARAM_PROJECTED_BEDGRAPH"_"$REF"_count_tmp.tsv
@@ -423,10 +427,10 @@ function countAllelicReads {
     bedtools coverage -a "$PARAM_GENE_COORDINATES" -b READS_OVERLAPPING_EXONS_"$ALT".bedGraph > "$PARAM_PROJECTED_BEDGRAPH"_"$ALT"_count_tmp.tsv
     rm READS_OVERLAPPING_EXONS_"$ALT".bedGraph
 
-    echo "#chr  start   end     ID      name    "$REF"" > tmp1.tsv
-    awk 'OFS="\t" {print $1, $2, $3, $4, $5, $6}' "$PARAM_PROJECTED_BEDGRAPH"_"$REF"_count_tmp.tsv >> tmp1.tsv
-    echo ""$ALT"" > tmp2.tsv
-    cut -f6 "$PARAM_PROJECTED_BEDGRAPH"_"$ALT"_count_tmp.tsv >> tmp2.tsv
+    echo "#chr  start   end     strand  ID      name    exonLength      "$REF"_allelicReadCount" > tmp1.tsv
+    awk 'OFS="\t" {print $1, $2, $3, $4, $5, $6, $7, $8}' "$PARAM_PROJECTED_BEDGRAPH"_"$REF"_count_tmp.tsv >> tmp1.tsv
+    echo ""$ALT"_allelicReadCount" > tmp2.tsv
+    cut -f8 "$PARAM_PROJECTED_BEDGRAPH"_"$ALT"_count_tmp.tsv >> tmp2.tsv
     cut -f1 tmp2.tsv | paste tmp1.tsv - > "$PARAM_PROJECTED_BEDGRAPH"_allelic_read_counts.tsv
     rm tmp1.tsv tmp2.tsv "$PARAM_PROJECTED_BEDGRAPH"_"$REF"_count_tmp.tsv "$PARAM_PROJECTED_BEDGRAPH"_"$ALT"_count_tmp.tsv
 
@@ -434,5 +438,26 @@ function countAllelicReads {
     date >> "$AL_LOG"/log.tsv
 }
 
-countAllelicReads BC_ICM_H3K36me3 Refseq_exon_mm10.bed Refseq_gene_mm10.bed
+countAllelicReads BC_ICM_H3K36me3 Refseq_exon_mm10.bed Refseq_VisRseq_Genes_mm10.bed
 
+
+
+
+
+
+
+### converts SORTED bam into wig format using bedtools (circumventing BAM2WIG)
+# input sorted bam and filter variables
+### output zipped wig for projection to reference
+
+function calculateTotalRPKM {
+    printProgress "Started calculateTotalRPKM"
+    local PARAM_INPUT_PREFIX=$1
+    local VAR_q=$AL_BAM2WIG_PARAM_MIN_QUALITY     # min read quality [0]
+    local VAR_F=$AL_BAM2WIG_PARAM_FILTERING_FLAG  # filtering flag [0]
+    aleaCheckFileExists "$PARAM_INPUT_PREFIX".bam
+    
+    $AL_BIN_SAMTOOLS view -bh -F $VAR_F -q $VAR_q "VAR_INPUT_BASENAME".bam > "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bam
+    $AL_BIN_BEDTOOLS genomecov -ibam "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bam -bg -split > "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bedGraph
+    
+}
