@@ -400,8 +400,9 @@ function convertBam2Wigbedtools {
 }
 
 
-# unfinished functions for counting allelic reads
-#test
+### input allelic projected bedGraphs
+# counts allelic reads over exons and aggregates over genes
+### output table with allelic read counts
 function countAllelicReads {
     
     printProgress "[countAllelicReads] Started" | tee $AL_LOG/log.tsv
@@ -409,11 +410,18 @@ function countAllelicReads {
     local PARAM_EXON_COORDINATES=$2
     local PARAM_GENE_COORDINATES=$3
     
-    echo "Input file $PARAM_PROJECTED_BEDGRAPH" >> $AL
+    echo "Input files "$PARAM_PROJECTED_BEDGRAPH"_"$REF".bedGraph and "$PARAM_PROJECTED_BEDGRAPH"_"$ALT".bedGraph >> $AL_LOG/log.tsv
+    echo "Using exon coordinate file $PARAM_EXON_COORDINATES" >> $AL_LOG/log.tsv
+    echo "And gene coordinate file $PARAM_GENE_COORDINATES" >> $AL_LOG/log.tsv
     
-    bedtools intersect -a "$PARAM_PROJECTED_BEDGRAPH" -b "$PARAM_EXON_COORDINATES" > "$READS_OVERLAPPING_EXONS".bedGraph
-    bedtools coverage -a "$READS_OVERLAPPING_EXONS".bedGraph -b "$PARAM_GENE_COORDINATES" > "$"
-	
+    bedtools intersect -a "$PARAM_PROJECTED_BEDGRAPH"_"$REF" -b "$PARAM_EXON_COORDINATES" > "$READS_OVERLAPPING_EXONS"_"$REF".bedGraph
+    bedtools coverage -a "$READS_OVERLAPPING_EXONS"_"$REF".bedGraph -b "$PARAM_GENE_COORDINATES" > "$PARAM_PROJECTED_BEDGRAPH"_"$REF"_count.tsv
+    bedtools intersect -a "$PARAM_PROJECTED_BEDGRAPH"_"$ALT" -b "$PARAM_EXON_COORDINATES" > "$READS_OVERLAPPING_EXONS"_"$ALT".bedGraph
+    bedtools coverage -a "$READS_OVERLAPPING_EXONS"_"$ALT".bedGraph -b "$PARAM_GENE_COORDINATES" > "$PARAM_PROJECTED_BEDGRAPH"_"$ALT"_count.tsv
+
+
+    echo "[countAllelicReads] Ended" >> log.tsv
+    echo date >> log.tsv
 }
 
 countAllelicReads "$PARAM_INPUT_BEDGRAPH" "$PARAM_EXON_COORDINATES" "$PARAM_GENE_COORDINATES"
