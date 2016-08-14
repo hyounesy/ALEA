@@ -413,10 +413,6 @@ function countAllelicReads {
     local ALT="CAST_EiJ"
     local AL_LOG="."
 
-    echo "Input allelic bedGraphs: "$PARAM_PROJECTED_BEDGRAPH"_"$REF".bedGraph and "$PARAM_PROJECTED_BEDGRAPH"_"$ALT".bedGraph (must be projected onto reference)" >> "$AL_LOG"/run_log.tsv
-    echo "Using exon coordinate file: $PARAM_EXON_COORDINATES (ensure no duplicate exons are present in file)" >> "$AL_LOG"/run_log.tsv
-    echo "And gene coordinate file: $PARAM_GENE_COORDINATES" >> "$AL_LOG"/run_log.tsv
-
     $AL_BIN_BEDTOOLS intersect -a "$PARAM_PROJECTED_BEDGRAPH"_"$REF".bedGraph -b "$PARAM_EXON_COORDINATES" > READS_OVERLAPPING_EXONS_"$REF".bedGraph
     $AL_BIN_BEDTOOLS coverage -a "$PARAM_GENE_COORDINATES" -b READS_OVERLAPPING_EXONS_"$REF".bedGraph > "$PARAM_PROJECTED_BEDGRAPH"_"$REF"_count_tmp.tsv
     rm READS_OVERLAPPING_EXONS_"$REF".bedGraph
