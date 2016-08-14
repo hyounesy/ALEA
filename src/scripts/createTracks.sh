@@ -405,7 +405,7 @@ function convertBam2Wigbedtools {
 ### output table with allelic read counts
 function countAllelicReads {
     
-    printProgress "[countAllelicReads] Started" | tee "$AL_LOG"/gene_stats_log.tsv
+    printProgress "[countAllelicReads] Started"
     local PARAM_PROJECTED_BEDGRAPH=$1
     local PARAM_EXON_COORDINATES=$2
     local PARAM_GENE_COORDINATES=$3
@@ -413,9 +413,9 @@ function countAllelicReads {
     local ALT="CAST_EiJ"
     local AL_LOG="."
 
-    echo "Input allelic bedGraphs: "$PARAM_PROJECTED_BEDGRAPH"_"$REF".bedGraph and "$PARAM_PROJECTED_BEDGRAPH"_"$ALT".bedGraph (must be projected onto reference)" >> "$AL_LOG"/gene_stats_log.tsv
-    echo "Using exon coordinate file: $PARAM_EXON_COORDINATES (ensure no duplicate exons are present in file)" >> "$AL_LOG"/gene_stats_log.tsv
-    echo "And gene coordinate file: $PARAM_GENE_COORDINATES" >> "$AL_LOG"/gene_stats_log.tsv
+    echo "Input allelic bedGraphs: "$PARAM_PROJECTED_BEDGRAPH"_"$REF".bedGraph and "$PARAM_PROJECTED_BEDGRAPH"_"$ALT".bedGraph (must be projected onto reference)" >> "$AL_LOG"/run_log.tsv
+    echo "Using exon coordinate file: $PARAM_EXON_COORDINATES (ensure no duplicate exons are present in file)" >> "$AL_LOG"/run_log.tsv
+    echo "And gene coordinate file: $PARAM_GENE_COORDINATES" >> "$AL_LOG"/run_log.tsv
 
     $AL_BIN_BEDTOOLS intersect -a "$PARAM_PROJECTED_BEDGRAPH"_"$REF".bedGraph -b "$PARAM_EXON_COORDINATES" > READS_OVERLAPPING_EXONS_"$REF".bedGraph
     $AL_BIN_BEDTOOLS coverage -a "$PARAM_GENE_COORDINATES" -b READS_OVERLAPPING_EXONS_"$REF".bedGraph > "$PARAM_PROJECTED_BEDGRAPH"_"$REF"_count_tmp.tsv
@@ -432,15 +432,13 @@ function countAllelicReads {
     cut -f1 tmp2.tsv | paste tmp1.tsv - > "$PARAM_PROJECTED_BEDGRAPH"_allelic_read_counts.tsv
     rm tmp1.tsv tmp2.tsv "$PARAM_PROJECTED_BEDGRAPH"_"$REF"_count_tmp.tsv "$PARAM_PROJECTED_BEDGRAPH"_"$ALT"_count_tmp.tsv
 
-    echo "[countAllelicReads] Ended" >> "$AL_LOG"/gene_stats_log.tsv
-    date >> "$AL_LOG"/gene_stats_log.tsv
+    echo "[countAllelicReads] Ended" >> "$AL_LOG"/run_log.tsv
+    date >> "$AL_LOG"/run_log.tsv
 
     #make histogram of allelic reads (REF+ALT) over each gene
     #make 
 	
-	
 }
-
 countAllelicReads BC_ICM_H3K36me3 Refseq_exon_mm10.bed Refseq_VisRseq_Genes_mm10.bed
 
 
@@ -468,7 +466,7 @@ function calculateTotalRPKM {
     #get scaling factor
     RPM_SCALING_FACTOR_tmp=`samtools view -c "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bam`
     RPM_SCALING_FACTOR=$(echo "scale=25;1000000/$RPM_SCALING_FACTOR_tmp" | bc)
-    echo ""$PARAM_INPUT_PREFIX" scaling factor: "$RPM_SCALING_FACTOR"" >> "$AL_LOG"/log.tsv
+    echo ""$PARAM_INPUT_PREFIX" scaling factor: "$RPM_SCALING_FACTOR"" >> "$AL_LOG"/run_log.tsv
 
     #convert bam to bedGraph
     $AL_BIN_BEDTOOLS genomecov -ibam "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bam -bg -split -scale "$RPM_SCALING_FACTOR" > "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bedGraph
@@ -483,6 +481,10 @@ function calculateTotalRPKM {
     awk 'OFS="\t" {print $1, $2, $3, $4, $5, $6, $7, $8/$7}' "$PARAM_INPUT_PREFIX"_tmp.tsv >> "$PARAM_INPUT_PREFIX"_RPKM.tsv
 
     rm tmp1.tsv "$PARAM_INPUT_PREFIX"_tmp.tsv READS_OVERLAPPING_EXONS_total.bedGraph "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bedGraph "$PARAM_INPUT_PREFIX".q"$VAR_q".F"$VAR_F".bam
+    
+    echo "[calculateTotalRPKM] Ended" >> "$AL_LOG"/run_log.tsv
+    date >> "$AL_LOG"/run_log.tsv
+
 }
 
 calculateTotalRPKM BCliverRep1 Refseq_exon_mm10.bed Refseq_VisRseq_mm10.bed
