@@ -215,7 +215,7 @@ function detectAllelicCytoConcatenated {
     
     cat "$PARAM_INPUT_METHYL" \
         | awk -v ref="$PARAM_STRAIN" '($0 ~ ref) {print $0}' \
-        | sed 's/'"$PARAM_STRAIN"'_chr//g' \
+        | sed 's/'"$PARAM_STRAIN"'_//g' \
         >> "$PARAM_OUT_PREFIX".CpG_report.txt
     
     printProgress "Finished detectAllelicCytoConcatenated"
@@ -243,13 +243,9 @@ function convertMethylationToWig {
             print "track type=wiggle_0"
         }
         $5 + $6 >= MIN_DEPTH{
-            if ($1 ~ /^chr/)
-                print "fixedStep chrom=" $1 " start=" $2 " step=1 span=1"
-            else
-                print "fixedStep chrom=chr" $1 " start=" $2 " step=1 span=1"
-	        for(i = 0; i < $3-$2+1; i++) {
+            print "fixedStep chrom=" $1 " start=" $2 " step=1 span=1"
+	        for(i = 0; i < $3-$2+1; i++)
 	        	print $4
-	        }
         }
     ' "$PARAM_SITE_REPORT_FILE" > "$PARAM_WIG_FILE"
     

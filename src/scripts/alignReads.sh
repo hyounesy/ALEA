@@ -246,13 +246,13 @@ function detectAllelicConcatenated {
     # output header first
     $AL_BIN_SAMTOOLS view -SH "$PARAM_INPUT_SAM" \
         | awk -v ref="$PARAM_STRAIN" '($0 ~ ref) {print $0}' \
-        | sed 's/'"$PARAM_STRAIN"'_chr//g' \
+        | sed 's/'"$PARAM_STRAIN"'_//g' \
         > "$PARAM_OUT_PREFIX".sam
     
     # append reads
     $AL_BIN_SAMTOOLS view -S $PARAM_INPUT_SAM \
         | awk -v ref="$PARAM_STRAIN" '(($3 ~ ref)&&($5'"$PARAM_QUALITY"')) {print $0}' \
-        | sed 's/'"$PARAM_STRAIN"'_chr//g' \
+        | sed 's/'"$PARAM_STRAIN"'_//g' \
         >> "$PARAM_OUT_PREFIX".sam
 
     # convert to bam

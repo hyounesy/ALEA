@@ -54,8 +54,8 @@ function concatFasta {
     local PARAM_FASTA_CONCAT=$5
     
     #first make the chromosome names unique
-    cat "$PARAM_FASTA1" | sed 's/>/>'"$PARAM_STRAIN1"'_chr/g' > "$PARAM_FASTA_CONCAT".1
-    cat "$PARAM_FASTA2" | sed 's/>/>'"$PARAM_STRAIN2"'_chr/g' > "$PARAM_FASTA_CONCAT".2
+    cat "$PARAM_FASTA1" | sed 's/>/>'"$PARAM_STRAIN1"'_/g' > "$PARAM_FASTA_CONCAT".1
+    cat "$PARAM_FASTA2" | sed 's/>/>'"$PARAM_STRAIN2"'_/g' > "$PARAM_FASTA_CONCAT".2
     
     # concatenate the two fasta files. (add a newline inbetween)
     echo >> "$PARAM_FASTA_CONCAT".1 
