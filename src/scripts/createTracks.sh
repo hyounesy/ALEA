@@ -325,10 +325,10 @@ if [ $AL_USE_BISMARK = 1 ]; then
         samtools view -Sb -q 1 "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.bam
         
         if [ "$VAR_OPTION" = "-s" ]; then
-            $AL_BIN_BISMARK_EXTRACT -s --comprehensive --cytosine_report --genome_folder $PARAM_REFERECE_DIR "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.bam
+            $AL_BIN_BISMARK_EXTRACT -s --comprehensive --cytosine_report -o "$PARAM_OUTPUT_DIR" --genome_folder $PARAM_REFERECE_DIR "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.bam
             
         elif [ "$VAR_OPTION" = "-p" ]; then
-            $AL_BIN_BISMARK_EXTRACT -p --comprehensive --cytosine_report --genome_folder $PARAM_REFERECE_DIR "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.bam
+            $AL_BIN_BISMARK_EXTRACT -p --comprehensive --cytosine_report -o "$PARAM_OUTPUT_DIR" --genome_folder $PARAM_REFERECE_DIR "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.bam
             
         else
             echo "Invalid option $VAR_OPTION"
