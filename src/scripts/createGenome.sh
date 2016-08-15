@@ -90,6 +90,26 @@ function createFastaIndex {
     printProgress "[createFastaIndex] Done"
 }
 
+function createRefStrRefmap {
+    local PARAM_FASTA_IDX=$1
+    local PARAM_OUTPUT_REFMAP=$2
+
+    printProgress "[createRefStrRefmap] Started"
+
+    awk '
+        BEGIN{
+            FS = "\t"
+            OFS = "\t"
+        }
+        {
+            print ">" $1
+	        print "0", "0", $2
+        }
+    ' "$PARAM_FASTA_IDX" > "$PARAM_OUTPUT_REFMAP"
+
+    printProgress "[createRefStrRefmap] Done"
+}
+
 ## creates the insilico genome for each haplotype
 #function createInsilicoGenome {
     printProgress "[createGenome] Started"
@@ -108,9 +128,17 @@ function createFastaIndex {
         aleaCheckFileExists $PARAM_INPUT_FASTA
         aleaCreateDir $PARAM_OUTPUT_DIR
         
+        if [ ! -d "$PARAM_INPUT_FASTA" ]; then
+            $AL_BIN_SAMTOOLS faidx "$PARAM_INPUT_FASTA"
+        fi
+        
         if [ $PARAM_STRAIN1 = $VAR_REFERENCE_STRAIN ]; then
-            # nothing to do. it is the reference genome
-            VAR_FASTA1="$PARAM_INPUT_FASTA"
+            # copy the reference genome as the reference stain name
+            VAR_FASTA1="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1".fasta
+            cp "$PARAM_INPUT_FASTA" "$VAR_FASTA1"
+            cp "$PARAM_INPUT_FASTA".fai "$VAR_FASTA1".fai
+            # create a refmap file for the reference strain
+            createRefStrRefmap "$VAR_FASTA1".fai "$VAR_FASTA1".refmap
         else
             VAR_GENOME1_SNPS="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1".snps.fasta
             # create insilico genome for strain 1 snps using reference
@@ -136,8 +164,12 @@ function createFastaIndex {
         
         
         if [ $PARAM_STRAIN2 = $VAR_REFERENCE_STRAIN ]; then
-            # nothing to do. it is the reference genome
-            VAR_FASTA2="$PARAM_INPUT_FASTA"
+            # copy the reference genome as the reference stain name
+            VAR_FASTA2="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN2".fasta
+            cp "$PARAM_INPUT_FASTA" "$VAR_FASTA2"
+            cp "$PARAM_INPUT_FASTA".fai "$VAR_FASTA2".fai
+            # create a refmap file for the reference strain
+            createRefStrRefmap "$VAR_FASTA2".fai "$VAR_FASTA2".refmap
         else
             VAR_GENOME2_SNPS="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN2".snps.fasta
             # create insilico genome for strain 2 snps using reference
@@ -175,9 +207,17 @@ function createFastaIndex {
         aleaCheckFileExists $PARAM_INPUT_FASTA
         aleaCreateDir $PARAM_OUTPUT_DIR
         
+        if [ ! -d "$PARAM_INPUT_FASTA" ]; then
+            $AL_BIN_SAMTOOLS faidx "$PARAM_INPUT_FASTA"
+        fi
+        
         if [ $PARAM_STRAIN1 = $VAR_REFERENCE_STRAIN ]; then
-            # nothing to do. it is the reference genome
-            VAR_FASTA1="$PARAM_INPUT_FASTA"
+            # copy the reference genome as the reference stain name
+            VAR_FASTA1="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1".fasta
+            cp "$PARAM_INPUT_FASTA" "$VAR_FASTA1"
+            cp "$PARAM_INPUT_FASTA".fai "$VAR_FASTA1".fai
+            # create a refmap file for the reference strain
+            createRefStrRefmap "$VAR_FASTA1".fai "$VAR_FASTA1".refmap
         else
             VAR_FASTA1="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1".fasta
             # create insilico genome for strain 1    
@@ -189,8 +229,12 @@ function createFastaIndex {
         fi
         
         if [ $PARAM_STRAIN2 = $VAR_REFERENCE_STRAIN ]; then
-            # nothing to do. it is the reference genome
-            VAR_FASTA2="$PARAM_INPUT_FASTA"
+            # copy the reference genome as the reference stain name
+            VAR_FASTA2="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN2".fasta
+            cp "$PARAM_INPUT_FASTA" "$VAR_FASTA2"
+            cp "$PARAM_INPUT_FASTA".fai "$VAR_FASTA2".fai
+            # create a refmap file for the reference strain
+            createRefStrRefmap "$VAR_FASTA1".fai "$VAR_FASTA1".refmap
         else
             VAR_FASTA2="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN2".fasta
             # create insilico genome for strain 2
