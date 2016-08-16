@@ -295,6 +295,7 @@ shift
     VAR_OUTPUT_BASENAME=`basename $PARAM_BAM_PREFIX`
     VAR_OUTPUT_PREFIX1="$PARAM_OUTPUT_DIR"/"$VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1"
     VAR_OUTPUT_PREFIX2="$PARAM_OUTPUT_DIR"/"$VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2"
+    VAR_OUTPUT_PREFIX_1_2="$PARAM_OUTPUT_DIR"/"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"
 
     projectToReferenceGenome "$VAR_OUTPUT_PREFIX1".wig.gz "$PARAM_REFMAP_FILE1" "$VAR_OUTPUT_PREFIX1".bedGraph
     $AL_BIN_BEDGRAPH_TO_BW "$VAR_OUTPUT_PREFIX1".bedGraph "$PARAM_CHROM_SIZES" "$VAR_OUTPUT_PREFIX1".bw
@@ -321,27 +322,27 @@ if [ $AL_USE_BISMARK = 1 ]; then
         samtools view -Sb -q 1 "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.bam
         
         if [ "$VAR_OPTION" = "-s" ]; then
-            $AL_BIN_BISMARK_EXTRACT -s --comprehensive --cytosine_report -o "$PARAM_OUTPUT_DIR" --genome_folder $PARAM_REFERECE_DIR "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.bam
+            $AL_BIN_BISMARK_EXTRACT -s --comprehensive --cytosine_report -o "$PARAM_OUTPUT_DIR" --genome_folder "$PARAM_REFERECE_DIR" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.bam
             
         elif [ "$VAR_OPTION" = "-p" ]; then
-            $AL_BIN_BISMARK_EXTRACT -p --comprehensive --cytosine_report -o "$PARAM_OUTPUT_DIR" --genome_folder $PARAM_REFERECE_DIR "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.bam
+            $AL_BIN_BISMARK_EXTRACT -p --comprehensive --cytosine_report -o "$PARAM_OUTPUT_DIR" --genome_folder "$PARAM_REFERECE_DIR" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.bam
             
         else
             echo "Invalid option $VAR_OPTION"
             exit 1
         fi
         
-        sort -k1,1 -k2,2n "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt.tmp
+        sort -k1,1 -k2,2n "$VAR_OUTPUT_PREFIX_1_2"_filtered.CpG_report.txt > "$VAR_OUTPUT_PREFIX_1_2"_filtered.CpG_report.txt.tmp
         if [ $AL_DEBUG = 0 ]
         then
-            rm "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt
+            rm "$VAR_OUTPUT_PREFIX_1_2"_filtered.CpG_report.txt
         else
-            mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.unsorted.txt
+            mv "$VAR_OUTPUT_PREFIX_1_2"_filtered.CpG_report.txt "$VAR_OUTPUT_PREFIX_1_2"_filtered.CpG_report.unsorted.txt
         fi
-        mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt.tmp "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt
+        mv "$VAR_OUTPUT_PREFIX_1_2"_filtered.CpG_report.txt.tmp "$VAR_OUTPUT_PREFIX_1_2"_filtered.CpG_report.txt
         
-        detectAllelicCytoConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt "$PARAM_STRAIN1" "$VAR_OUTPUT_PREFIX1"
-        detectAllelicCytoConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_filtered.CpG_report.txt "$PARAM_STRAIN2" "$VAR_OUTPUT_PREFIX2"
+        detectAllelicCytoConcatenated "$VAR_OUTPUT_PREFIX_1_2"_filtered.CpG_report.txt "$PARAM_STRAIN1" "$VAR_OUTPUT_PREFIX1"
+        detectAllelicCytoConcatenated "$VAR_OUTPUT_PREFIX_1_2"_filtered.CpG_report.txt "$PARAM_STRAIN2" "$VAR_OUTPUT_PREFIX2"
         
         mergeTwoStrandMethylation "$VAR_OUTPUT_PREFIX1".CpG_report.txt "$VAR_OUTPUT_PREFIX1".CpG_site_report.txt
         mergeTwoStrandMethylation "$VAR_OUTPUT_PREFIX2".CpG_report.txt "$VAR_OUTPUT_PREFIX2".CpG_site_report.txt
