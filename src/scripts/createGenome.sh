@@ -177,7 +177,7 @@ function createRefStrRefmap {
                 --input-fasta="$PARAM_INPUT_FASTA" \
                 --input-vcf="$PARAM_INPUT_VCF_SNPS" \
                 --strain="$PARAM_STRAIN2" \
-                --output-fasta="$VAR_GENOME1_SNPS"
+                --output-fasta="$VAR_GENOME2_SNPS"
             
             VAR_FASTA2="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN2".fasta
             
