@@ -25,9 +25,8 @@ AL_ALIGNER_TYPE_CHIP=1
 
 # In the case of RNA-seq
 AL_ALIGNER_CHOICE_RNA='
-[1] BWA
-[2] Bowtie
-[3] Bowtie2'
+[1] STAR
+[2] Tophat2'
 
 AL_ALIGNER_TYPE_RNA=1
 
