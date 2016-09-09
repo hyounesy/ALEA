@@ -80,7 +80,7 @@ function createFastaIndex {
         $AL_BIN_BOWTIE1_INDEX "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie1-index/"$PARAM_STRAIN"
     elif [ $AL_USE_BOWTIE2 = 1 ]; then
         aleaCreateDir "$PARAM_OUTPUT_DIR"/bowtie2-index
-        $AL_BIN_BOWTIE2_INDEX "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"$PARAM_STRAIN"
+        $AL_BIN_BOWTIE2_INDEX --large-index "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"$PARAM_STRAIN"
     elif [ $AL_USE_BISMARK = 1 ]; then
         aleaCreateDir "$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN"
         cp "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN"
