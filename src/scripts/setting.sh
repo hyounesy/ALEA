@@ -80,6 +80,8 @@ function modifyConfig {
                         s/AL_USE_BOWTIE1=[01]/AL_USE_BOWTIE1=0/
                         s/AL_USE_BOWTIE2=[01]/AL_USE_BOWTIE2=0/
                         s/AL_USE_BISMARK=[01]/AL_USE_BISMARK=0/
+                        s/AL_USE_STAR=[01]/AL_USE_STAR=0/
+                        s/AL_USE_TOPHAT2=[01]/AL_USE_TOPHAT2=0/
                     " > $AL_DIR_TOOLS/.alea.config.tmp
                     ;;
                 
@@ -89,6 +91,8 @@ function modifyConfig {
                         s/AL_USE_BOWTIE1=[01]/AL_USE_BOWTIE1=1/
                         s/AL_USE_BOWTIE2=[01]/AL_USE_BOWTIE2=0/
                         s/AL_USE_BISMARK=[01]/AL_USE_BISMARK=0/
+                        s/AL_USE_STAR=[01]/AL_USE_STAR=0/
+                        s/AL_USE_TOPHAT2=[01]/AL_USE_TOPHAT2=0/
                     " > $AL_DIR_TOOLS/.alea.config.tmp
                     ;;
                 
@@ -98,11 +102,13 @@ function modifyConfig {
                         s/AL_USE_BOWTIE1=[01]/AL_USE_BOWTIE1=0/
                         s/AL_USE_BOWTIE2=[01]/AL_USE_BOWTIE2=1/
                         s/AL_USE_BISMARK=[01]/AL_USE_BISMARK=0/
+                        s/AL_USE_STAR=[01]/AL_USE_STAR=0/
+                        s/AL_USE_TOPHAT2=[01]/AL_USE_TOPHAT2=0/
                     " > $AL_DIR_TOOLS/.alea.config.tmp
                     ;;
                 
                 * )
-                    echo "Invalid aligner type"
+                    echo "Invalid aligner type"
                     exit 1
                     ;;
             esac
@@ -110,30 +116,26 @@ function modifyConfig {
         
         2 ) # in the case of RNA-seq
             case $PARAM_ALIGNER_TYPE in
-                1 ) # in the case of BWA
-                    cat $AL_DIR_TOOLS/alea.config | sed -e "
-                        s/AL_USE_BWA=[01]/AL_USE_BWA=1/
-                        s/AL_USE_BOWTIE1=[01]/AL_USE_BOWTIE1=0/
-                        s/AL_USE_BOWTIE2=[01]/AL_USE_BOWTIE2=0/
-                        s/AL_USE_BISMARK=[01]/AL_USE_BISMARK=0/
-                    " > $AL_DIR_TOOLS/.alea.config.tmp
-                    ;;
                 
-                2 ) # in the case of Bowtie1
-                    cat $AL_DIR_TOOLS/alea.config | sed -e "
-                        s/AL_USE_BWA=[01]/AL_USE_BWA=0/
-                        s/AL_USE_BOWTIE1=[01]/AL_USE_BOWTIE1=1/
-                        s/AL_USE_BOWTIE2=[01]/AL_USE_BOWTIE2=0/
-                        s/AL_USE_BISMARK=[01]/AL_USE_BISMARK=0/
-                    " > $AL_DIR_TOOLS/.alea.config.tmp
-                    ;;
-                
-                3 ) # in the case of Bowtie2
+                1 ) # in the case of STAR
                     cat $AL_DIR_TOOLS/alea.config | sed -e "
                         s/AL_USE_BWA=[01]/AL_USE_BWA=0/
                         s/AL_USE_BOWTIE1=[01]/AL_USE_BOWTIE1=0/
-                        s/AL_USE_BOWTIE2=[01]/AL_USE_BOWTIE2=1/
+                        s/AL_USE_BOWTIE2=[01]/AL_USE_BOWTIE2=0/
                         s/AL_USE_BISMARK=[01]/AL_USE_BISMARK=0/
+                        s/AL_USE_STAR=[01]/AL_USE_STAR=1/
+                        s/AL_USE_TOPHAT2=[01]/AL_USE_TOPHAT2=0/
+                    " > $AL_DIR_TOOLS/.alea.config.tmp
+                    ;;
+                
+                2 ) # in the case of TOPHAT2
+                    cat $AL_DIR_TOOLS/alea.config | sed -e "
+                        s/AL_USE_BWA=[01]/AL_USE_BWA=0/
+                        s/AL_USE_BOWTIE1=[01]/AL_USE_BOWTIE1=0/
+                        s/AL_USE_BOWTIE2=[01]/AL_USE_BOWTIE2=0/
+                        s/AL_USE_BISMARK=[01]/AL_USE_BISMARK=0/
+                        s/AL_USE_STAR=[01]/AL_USE_STAR=0/
+                        s/AL_USE_TOPHAT2=[01]/AL_USE_TOPHAT2=1/
                     " > $AL_DIR_TOOLS/.alea.config.tmp
                     ;;
                 
@@ -152,6 +154,8 @@ function modifyConfig {
                         s/AL_USE_BOWTIE1=[01]/AL_USE_BOWTIE1=0/
                         s/AL_USE_BOWTIE2=[01]/AL_USE_BOWTIE2=0/
                         s/AL_USE_BISMARK=[01]/AL_USE_BISMARK=1/
+                        s/AL_USE_STAR=[01]/AL_USE_STAR=0/
+                        s/AL_USE_TOPHAT2=[01]/AL_USE_TOPHAT2=0/
                     " > $AL_DIR_TOOLS/.alea.config.tmp
                     ;;
                 
@@ -251,7 +255,7 @@ case $INPUT_ANALYSIS_TYPE in
         if [ -z "$INPUT_ALIGNER_TYPE" ]
         then
             INPUT_ALIGNER_TYPE=$AL_ALIGNER_TYPE_RNA
-        elif [[ ! "$INPUT_ALIGNER_TYPE" =~ [1-3] ]]
+        elif [[ ! "$INPUT_ALIGNER_TYPE" =~ [1-5] ]]
         then
             echo "Invalid input. The current status was held."
             INPUT_ALIGNER_TYPE=$AL_ALIGNER_TYPE_RNA
