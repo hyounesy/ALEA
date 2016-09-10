@@ -86,11 +86,10 @@ function createFastaIndex {
         cp "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN"
         $AL_BIN_BISMARK_INDEX "$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN"
     elif [ $AL_USE_STAR = 1 ]; then
-    	aleaCreateDir "$PARAM_OUTPUT_DIR"/STAR-index
-    	$AL_BIN_STAR --runMode genomeGenerate --runThreadN 36 --genomeDir "$PARAM_OUTPUT_DIR"/STAR-index --genomeFastaFiles "$PARAM_STRAIN"
+    	$AL_BIN_STAR --runMode genomeGenerate --runThreadN 36 --genomeDir "$PARAM_OUTPUT_DIR"/ --genomeFastaFiles "$PARAM_FASTA"
     elif [ $AL_USE_TOPHAT2 = 1 ]; then
     	aleaCreateDir "$PARAM_OUTPUT_DIR"/bowtie2-index
-        $AL_BIN_BOWTIE2_INDEX "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"$PARAM_STRAIN"
+        $AL_BIN_BOWTIE2_INDEX --large-index "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"$PARAM_STRAIN"
     fi
 
     printProgress "[createFastaIndex] Done"
