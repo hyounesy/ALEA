@@ -336,12 +336,26 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
         elif [ $AL_USE_BOWTIE1 = 1 ]; then
             aleaCheckFileExists "$PARAM_GENOME".1.ebwt
             $AL_BIN_BOWTIE1 $AL_BOWTIE1_ALN_PARAMS "$PARAM_GENOME" $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
-        elif [ $AL_USE_BOWTIE2 = 1 ]; then
-            aleaCheckFileExists "$PARAM_GENOME".1.bt2
-            $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME" $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
-	elif [ $AL_USE_BISMARK = 1 ]; then
+       	elif [ $AL_USE_BISMARK = 1 ]; then
             aleaCheckDirExists "$PARAM_GENOME"/Bisulfite_Genome
             $AL_BIN_BISMARK $AL_BISMARK_ALN_PARAMS --basename "${PARAM_BAM_PREFIX##*/}"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2" -o "${PARAM_BAM_PREFIX%/*}" "$PARAM_GENOME" $PARAM_FASTQ_FILE
+        
+       	elif [ $AL_USE_STAR = 1 ]; then
+            aleaCheckDirExists "$PARAM_GENOME"
+            $AL_BIN_STAR --runMode alignReads --genomeDir "$PARAM_GENOME" "$AL_STAR_ALN_PARAMS" --readFilesIn "$PARAM_FASTQ_FILE"
+            mv Aligned.out.sam "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+            mv Log.out "$PARAM_BAM_PREFIX"_STAR_RunParameters.tsv
+            mv Log.final.out "$PARAM_BAM_PREFIX"_STAR_AlignmentSummary.tsv
+            
+        elif [ $AL_USE_TOPHAT2 = 1 ]; then
+            aleaCheckFileExists "$PARAM_GENOME".1.bt2l
+            $AL_BIN_TOPHAT2 $AL_TOPHAT2_ALN_PARAMS "$PARAM_GENOME" $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+	    mv ./tophat_out/accepted_hits.sam ./"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam    
+	elif [ $AL_USE_BOWTIE2 = 1 ]; then
+            aleaCheckFileExists "$PARAM_GENOME".1.bt2l
+            $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME" $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+        
+        
         fi
     else #[ $PARAM_SINGLE_READS = 0 ]
         #align paired-end reads to concatenated insilico genome
@@ -362,6 +376,29 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
             aleaCheckDirExists "$PARAM_GENOME"/Bisulfite_Genome
             $AL_BIN_BISMARK $AL_BISMARK_ALN_PARAMS --basename "${PARAM_BAM_PREFIX##*/}"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2" -o "${PARAM_BAM_PREFIX%/*}" "$PARAM_GENOME" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2
             mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_pe.sam "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+        
+        
+        elif [ $AL_USE_STAR = 1 ]; then
+            aleaCheckDirExists "$PARAM_GENOME"
+            $AL_BIN_STAR --runMode alignReads --genomeDir "$PARAM_GENOME" "$AL_STAR_ALN_PARAMS" --readFilesIn "$PARAM_FASTQ_FILE1" "$PARAM_FASTQ_FILE2"
+            mv Aligned.out.sam "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+            mv Log.out "$PARAM_BAM_PREFIX"_STAR_RunParameters.tsv
+            mv Log.final.out "$PARAM_BAM_PREFIX"_STAR_AlignmentSummary.tsv
+        elif [ $AL_USE_TOPHAT2 = 1 ]; then
+            aleaCheckFileExists "$PARAM_GENOME".1.bt2l
+            $AL_BIN_TOPHAT2 $AL_TOPHAT2_ALN_PARAMS "$PARAM_GENOME" "$PARAM_FASTQ_FILE1" "$PARAM_FASTQ_FILE2" > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+	    mv ./tophat_out/accepted_hits.sam ./"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam    
+	elif [ $AL_USE_BOWTIE2 = 1 ]; then
+            aleaCheckFileExists "$PARAM_GENOME".1.bt2l
+            $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME" "$PARAM_FASTQ_FILE1" "$PARAM_FASTQ_FILE2" > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+        
+        
+        
+        
+        
+        
+        
+        
         fi
     fi
     
