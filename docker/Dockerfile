@@ -41,9 +41,15 @@ RUN apt-get clean
 WORKDIR /root
 
 
+#########################################
+# shapeit.v2
+#########################################
 
-
-
+RUN mkdir /tmp/shapeit
+WORKDIR /tmp/shapeit
+RUN wget https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r837.GLIBCv2.12.Linux.static.tgz
+RUN tar -zxvf shapeit.v2.r837.GLIBCv2.12.Linux.static.tgz
+RUN cp -p bin/shapeit /usr/local/bin
 
 
 
