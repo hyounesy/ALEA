@@ -21,16 +21,75 @@ source $AL_DIR_TOOLS/alea.config
 #############   Module 5: statistical analysis
 ##############################################################################
 
+PARAM_VALID=1
+PARAM_SINGLE_READS=1
+if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
+    if [ $# -eq 6 ]; then
+        PARAM_PREFIX_BAM=$1
+	PARAM_STRAIN1=$2
+	PARAM_STRAIN2=$3
+        PARAM_INTERVALS=$4
+	PARAM_MIN_MAPQ=$5
+	PARAM_OUTPUT=$6
+    else
+        PARAM_VALID=0
+    fi
+else
+    PARAM_VALID=0
+    fi
+fi
+
+if [ $PARAM_VALID = 0 ]; then
+    echo "
+Usage:
+    using concatenated genome method (AL_USE_CONCATENATED_GENOME=1):
+        alea createReport <input bam prefix> <strain1> <strain2> <interval file> <minimum MAPQ filter> <output folder>
+Options:
+    input_bam_prefix  prefix of input bam filenames
+		      will be used as basename for all subsequent files in this module
+		      
+    strain1	      as per previous modules
+    strain2	      as per previous modules
+    
+    intervals         General Feature Format (GFF) used for counting reads
+    		      supplied in folder "gff"
+		      if using custom gff, please match supplied format
+                    
+    min MAPQ   	      minimum mapping quality for an aligned read to be kept
+		      this will change depending on the aligner used.
+		      for BWA, we suggest MAPQ 10
+		      for bowtie2, we suggest MAPQ X
+		      for Tophat2, we suggest MAPQ X
+		      for STAR, we suggest MAPQ 1
+		      for Bismark, we suggest MAPQ X
+
+Output:
+        
+    outputPrefix_analysis.tsv	a table with allelic coverage, total RPKM, parental ratios
+				and other statistics for each interval in the GFF file.
+
+Examples:
+    (AL_USE_BWA=1)
+    alea createReport H3K4me3Liver C57BL6J CAST_EiJ transcriptionStartSites_mm10.gff 10 promoter_statistics
+    (AL_USE_STAR=1)
+    alea createReport F1hybridLiver C57BL6J CAST_EiJ RefseqGenes_mm10.gff 1 gene_expression_analysis
+
+"
+exit 1
+fi
+
+
+
+
 function BAM2WIGbedtools {
 	PARAM_PREFIX=$1
 	PARAM_CHROMOSOME_SIZES=""
 
 	$AL_BIN_SAMTOOLS view -bh -F "$PARAM_FLAG" -q "$PARAM_MINMAPQ" "$PARAM_PREFIX".bam > "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bam
-    $AL_BIN_BEDTOOLS genomecov -ibam "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bam -bg -split -scale "$RPM_SCALING_FACTOR" > "$PARAM_PREFIX"l_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bedGraph
-    $AL_BIN_BEDGRAPH_TO_BW "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bedGraph "$PARAM_CHROMOSOME_SIZES" "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bw #output this file for viz
+	$AL_BIN_BEDTOOLS genomecov -ibam "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bam -bg -split -scale "$RPM_SCALING_FACTOR" > "$PARAM_PREFIX"l_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bedGraph
+	$AL_BIN_BEDGRAPH_TO_BW "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bedGraph "$PARAM_CHROMOSOME_SIZES" "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bw #output this file for viz
 
-    awk '
-        BEGIN {
+        awk 'BEGIN {
                 print "track type=wiggle_0"
         }
         NF == 4 {
@@ -39,7 +98,7 @@ function BAM2WIGbedtools {
                         print $4
                 }
         }' "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bedGraph > "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".wig
-    bgzip -c "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".wig > "$PARAM_PREFIX".wig.gz
+	bgzip -c "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".wig > "$PARAM_PREFIX".wig.gz
 }
 
 BAM2WIGbedtools "$PARAM_PREFIX"_total
@@ -59,8 +118,8 @@ function TrackHubGenerate {
 	
 
  	RPM_SCALING_FACTOR_tmp=`samtools view -c "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bam`
-    RPM_SCALING_FACTOR=$(echo "scale=25;1000000/$RPM_SCALING_FACTOR_tmp" | bc)
-    echo ""$PARAM_PREFIX" scaling factor: "$RPM_SCALING_FACTOR"" >> "$AL_LOG"/log.txt
+	RPM_SCALING_FACTOR=$(echo "scale=25;1000000/$RPM_SCALING_FACTOR_tmp" | bc)
+	echo ""$PARAM_PREFIX" scaling factor: "$RPM_SCALING_FACTOR"" >> "$AL_LOG"/log.txt
 
 	awk -F "\t" -v RPM_SCALE="$RPM_SCALING_FACTOR" 'BEGIN {OFS="\t"; print $0} {
 		$4 *= RPM_SCALE
@@ -72,16 +131,16 @@ function TrackHubGenerate {
 	awk -F "\t" -v RPM_SCALE="$RPM_SCALING_FACTOR" 'BEGIN {OFS="\t"; print $0} {
                 $4 *= RPM_SCALE
                 print $0;}' "$PARAM_PREFIX"_"$STRAIN2".bedGraph > "$PARAM_PREFIX"_"$STRAIN2"_tmp1.bedGraph
-    grep -v "type" "$PARAM_PREFIX"_"$STRAIN2"_tmp1.bedGraph > "$PARAM_PREFIX"_"$STRAIN2"_tmp2.bedGraph
-    sort -k1,1 -k2,2n "$PARAM_PREFIX"_"$STRAIN2"_tmp2.bedGraph > "$PARAM_PREFIX"_"$STRAIN2"_tmp3.bedGraph
-    $AL_BIN_BEDGRAPH_TO_BW "$PARAM_PREFIX"_"$STRAIN2"_tmp3.bedGraph "$PARAM_CHROMOSOME_SIZES" ./Track_Hub/"$PARAM_GENOME"/"$PARAM_PREFIX"_"$STRAIN2".bw
+	grep -v "type" "$PARAM_PREFIX"_"$STRAIN2"_tmp1.bedGraph > "$PARAM_PREFIX"_"$STRAIN2"_tmp2.bedGraph
+	sort -k1,1 -k2,2n "$PARAM_PREFIX"_"$STRAIN2"_tmp2.bedGraph > "$PARAM_PREFIX"_"$STRAIN2"_tmp3.bedGraph
+	$AL_BIN_BEDGRAPH_TO_BW "$PARAM_PREFIX"_"$STRAIN2"_tmp3.bedGraph "$PARAM_CHROMOSOME_SIZES" ./Track_Hub/"$PARAM_GENOME"/"$PARAM_PREFIX"_"$STRAIN2".bw
 
 	awk -F "\t" -v RPM_SCALE="$RPM_SCALING_FACTOR" 'BEGIN {OFS="\t"; print $0} {
                 $4 *= RPM_SCALE
                 print $0;}' "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bedGraph > "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ"_tmp1.bedGraph
-    grep -v "type" "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ"_tmp1.bedGraph > "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ"_tmp2.bedGraph
-    sort -k1,1 -k2,2n "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ"_tmp2.bedGraph > "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ"_tmp3.bedGraph
-    $AL_BIN_BEDGRAPH_TO_BW "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ"_tmp3.bedGraph "$PARAM_CHROMOSOME_SIZES" ./Track_Hub/"$PARAM_GENOME"/"$PARAM_PREFIX"_total.bw
+	grep -v "type" "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ"_tmp1.bedGraph > "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ"_tmp2.bedGraph
+	sort -k1,1 -k2,2n "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ"_tmp2.bedGraph > "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ"_tmp3.bedGraph
+	$AL_BIN_BEDGRAPH_TO_BW "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ"_tmp3.bedGraph "$PARAM_CHROMOSOME_SIZES" ./Track_Hub/"$PARAM_GENOME"/"$PARAM_PREFIX"_total.bw
 
 
 	printf "genome "$PARAM_GENOME"\ntrackDb "$PARAM_GENOME"/trackDb.txt" > ./Track_Hub/genomes.txt
