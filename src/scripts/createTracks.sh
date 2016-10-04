@@ -80,6 +80,35 @@ fi
 #############   Module 4: projection to reference genome
 ##############################################################################
 
+###converts bam to wig using bedtools
+function BAM2WIGbedtools {
+    local PARAM_INPUT_PREFIX=$1
+    local PARAM_OUTPUT_DIR=$2
+
+    local VAR_q=$AL_BAM2WIG_PARAM_MIN_QUALITY     # min read quality [0]
+    local VAR_F=$AL_BAM2WIG_PARAM_FILTERING_FLAG  # filtering flag [0]
+    local VAR_x=$AL_BAM2WIG_PARAM_SE_EXTENSION    # average fragment length used for fixed length of the read extension [0]. used for ChIP-seq (SET) only
+    local VAR_INPUT_BASENAME=`basename $PARAM_INPUT_PREFIX`
+    
+    aleaCheckFileExists "$PARAM_INPUT_PREFIX".bam
+    $AL_BIN_SAMTOOLS view -bh -F "$VAR_F" -q "$VAR_q" "$PARAM_INPUT_PREFIX".bam > "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bam
+    $AL_BIN_BEDTOOLS genomecov -ibam "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bam -bg -split > "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bedGraph
+    $AL_BIN_BEDGRAPH_TO_BW "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bedGraph "$PARAM_CHROM_SIZES" "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bw #output this file for viz
+
+    awk 'BEGIN {
+            print "track type=wiggle_0"
+    }
+    NF == 4 {
+            print "fixedStep chrom="$1" start="$2+1" step=1 span=1"
+            for(i = 0; i < $3-$2; i++) {
+                       print $4
+            }
+    }' "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bedGraph > "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".wig
+    bgzip -c "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".wig > "$PARAM_INPUT_PREFIX".wig.gz
+    rm "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".wig
+    mv "$PARAM_INPUT_PREFIX".wig.gz "$PARAM_INPUT_PREFIX".bedGraph "$PARAM_INPUT_PREFIX".bw ./"$PARAM_OUTPUT_DIR"/
+}
+
 ### Converts filtered bam files to wig
 function convertBam2WigSE {
     local PARAM_INPUT_PREFIX=$1
@@ -282,11 +311,11 @@ shift
     
     
     if [ "$VAR_OPTION" = "-s" ]; then
-        convertBam2WigSE "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1" "$PARAM_OUTPUT_DIR"
-        convertBam2WigSE "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2" "$PARAM_OUTPUT_DIR"
+        BAM2WIGbedtools "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1" "$PARAM_OUTPUT_DIR"
+        BAM2WIGbedtools "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2" "$PARAM_OUTPUT_DIR"
     elif [ "$VAR_OPTION" = "-p" ]; then
-        convertBam2WigPE "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1" "$PARAM_OUTPUT_DIR"
-        convertBam2WigPE "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2" "$PARAM_OUTPUT_DIR"
+        BAM2WIGbedtools "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1" "$PARAM_OUTPUT_DIR"
+        BAM2WIGbedtools "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2" "$PARAM_OUTPUT_DIR"
     else
         echo "Invalid option $VAR_OPTION"
         exit 1
