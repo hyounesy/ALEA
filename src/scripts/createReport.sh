@@ -81,37 +81,6 @@ Examples:
 exit 1
 fi
 
-
-
-
-function BAM2WIGbedtools {
-	PARAM_PREFIX=$1
-	PARAM_CHROMOSOME_SIZES=""
-
-	$AL_BIN_SAMTOOLS view -bh -F "$PARAM_FLAG" -q "$PARAM_MINMAPQ" "$PARAM_PREFIX".bam > "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bam
-	$AL_BIN_BEDTOOLS genomecov -ibam "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bam -bg -split -scale "$RPM_SCALING_FACTOR" > "$PARAM_PREFIX"l_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bedGraph
-	$AL_BIN_BEDGRAPH_TO_BW "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bedGraph "$PARAM_CHROMOSOME_SIZES" "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bw #output this file for viz
-
-        awk 'BEGIN {
-                print "track type=wiggle_0"
-        }
-        NF == 4 {
-                print "fixedStep chrom="$1" start="$2+1" step=1 span=1"
-                for(i = 0; i < $3-$2; i++) {
-                        print $4
-                }
-        }' "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".bedGraph > "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".wig
-	bgzip -c "$PARAM_PREFIX"_F"$PARAM_FLAG"_q"$PARAM_MINMAPQ".wig > "$PARAM_PREFIX".wig.gz
-}
-
-BAM2WIGbedtools "$PARAM_PREFIX"_total
-BAM2WIGbedtools "$PARAM_BAM_PREFIX"_"$STRAIN1"
-BAM2WIGbedtools "$PARAM_BAM_PREFIX"_"$STRAIN2"
-
-
-
-
-
 function TrackHubGenerate {
 	local PARAM_INPUT_PREFIX=$1
 	local PARAM_CHROMOSOME_SIZES=""
