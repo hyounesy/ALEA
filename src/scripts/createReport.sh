@@ -129,14 +129,15 @@ function TrackHubGenerate {
 	sort -k1,1 -k2,2n "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$PARAM_MIN_MAPQ"_tmp2.bedGraph > "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$PARAM_MIN_MAPQ"_tmp3.bedGraph
 	$AL_BIN_BEDGRAPH_TO_BW "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$PARAM_MIN_MAPQ"_tmp3.bedGraph "$PARAM_CHROM_SIZES" ./Track_Hub/"$PARAM_GENOME"/"$PARAM_INPUT_PREFIX"_total.bw
 
-
+	### code adapted from Aaron Bogutz, Louis Lefebvre lab (UBC)
 	printf "genome "$PARAM_GENOME"\ntrackDb "$PARAM_GENOME"/trackDb.txt" > ./Track_Hub/genomes.txt
-	printf "hub <name>\nshortLabel <short name>\nlongLabel <Hub to dispaly data at UCSC>\ngenomesFile genomes.txt\nemail <email>" > ./Track_Hub/hub.txt
-	printf "track %s\ncontainer multiWig\nshortLabel %s\nlongLabel %s\ntype bigWig\nvisibility full\nmaxHeightPixels 150:60:32\nconfigurable on\nautoScale on\naggregate transparentOverlay\nshowSubtrackColorOnUi on\npriority 1.0\n\n" "$PARAM_INPUT_PREFIX"_total "$PARAM_INPUT_PREFIX"_total "$PARAM_INPUT_PREFIX"_total.bw | tee -a ./Track_Hub/"$PARAM_GENOME"/trackDb.txt
-	printf "\ttrack %s\n\tparent %s\n\tshortLabel %s\n\tlongLabel %s\n\ttype bigWig\n\tbigDataUrl %s\n\tcolor 215,215,215\n\taltColor 225,225,225\n\tautoScale on\n\n" "$PARAM_INPUT_PREFIX"_total "$PARAM_INPUT_PREFIX"_total "$PARAM_INPUT_PREFIX"_total "$PARAM_INPUT_PREFIX"_total "$PARAM_INPUT_PREFIX"_total.bw | tee -a ./Track_Hub/"$PARAM_GENOME"/trackDb.txt
-	printf "\ttrack %s\n\tparent %s\n\tshortLabel %s\n\tlongLabel %s\n\ttype bigWig\n\tbigDataUrl %s\n\tcolor 215,215,215\n\taltColor 225,225,225\n\tautoScale on\n\n" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1".bw | tee -a ./Track_Hub/"$PARAM_GENOME"/trackDb.txt
-	printf "\ttrack %s\n\tparent %s\n\tshortLabel %s\n\tlongLabel %s\n\ttype bigWig\n\tbigDataUrl %s\n\tcolor 215,215,215\n\taltColor 225,225,225\n\tautoScale on\n\n" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN2" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN2" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN2" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN2" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN2".bw | tee -a ./Track_Hub/"$PARAM_GENOME"/trackDb.txt
-	$AL_BIN_HUBCHECK ./Track_Hub/hub.txt
+	printf "hub <name>\nshortLabel <short name>\nlongLabel <Hub to display data at UCSC>\ngenomesFile genomes.txt\nemail <email>" > ./Track_Hub/hub.txt
+	printf "track %s\ncontainer multiWig\nshortLabel %s\nlongLabel %s\ntype bigWig\nvisibility full\nmaxHeightPixels 150:60:32\nconfigurable on\nautoScale on\naggregate transparentOverlay\nshowSubtrackColorOnUi on\npriority 1.0\n\n" "$PARAM_INPUT_PREFIX" "$PARAM_INPUT_PREFIX" "$PARAM_INPUT_PREFIX" | tee -a ./Track_Hub/"$PARAM_GENOME"/trackDb.txt
+	printf "\ttrack %s\n\tparent %s\n\tshortLabel %s\n\tlongLabel %s\n\ttype bigWig\n\tbigDataUrl %s\n\tcolor 215,215,215\n\taltColor 225,225,225\n\tautoScale on\n\n" "$PARAM_INPUT_PREFIX"_total "$PARAM_INPUT_PREFIX" "$PARAM_INPUT_PREFIX"_total "$PARAM_INPUT_PREFIX"_total "$PARAM_INPUT_PREFIX"_total.bw | tee -a ./Track_Hub/"$PARAM_GENOME"/trackDb.txt
+	printf "\ttrack %s\n\tparent %s\n\tshortLabel %s\n\tlongLabel %s\n\ttype bigWig\n\tbigDataUrl %s\n\tcolor 215,215,215\n\taltColor 225,225,225\n\tautoScale on\n\n" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1" "$PARAM_INPUT_PREFIX" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1".bw | tee -a ./Track_Hub/"$PARAM_GENOME"/trackDb.txt
+	printf "\ttrack %s\n\tparent %s\n\tshortLabel %s\n\tlongLabel %s\n\ttype bigWig\n\tbigDataUrl %s\n\tcolor 215,215,215\n\taltColor 225,225,225\n\tautoScale on\n\n" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN2" "$PARAM_INPUT_PREFIX" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN2" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN2" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN2".bw | tee -a ./Track_Hub/"$PARAM_GENOME"/trackDb.txt
+	$AL_BIN_HUBCHECK -noTracks ./Track_Hub/hub.txt
+	rm *tmp*.bedGraph
 }
 
 TrackHubGenerate
@@ -145,11 +146,11 @@ TrackHubGenerate
 
 
 
-function generateRPKM {
-	$AL_BIN_PYTHON $AL_BIN_RPKMCOUNT -i "$PARAM_PREFIX".bam -r "$PARAM_INTERVALS" -o "$PARAM_PREFIX" -q "$PARAM_MINMAPQ" -e
-}
+#function generateRPKM {
+#	$AL_BIN_PYTHON $AL_BIN_RPKMCOUNT -i "$PARAM_PREFIX".bam -r "$PARAM_INTERVALS" -o "$PARAM_PREFIX" -q "$PARAM_MINMAPQ" -e
+#}
 
-function generateRPKMcustom {
+#function generateRPKMcustom {
 #input gff file
 #input bedGraph files from 1) bedtools genomecov (total.bedgraph) and 2) alea project (strain1.bedgraph strain2.bedgraph)
 #convert to smart format: unique "genes" i.e. no isoforms (done in Python) BY EXON
@@ -158,4 +159,4 @@ function generateRPKMcustom {
 #divide the total.bedgraph column by the calculated mRNA size 
 #report the strain1.bedgraph and strain2.bedgraph columns as COVERAGE
 #calculate final column: parental_skew / parental_ratio / bias (strain2/(strain1+2)
-}
+#}
