@@ -55,7 +55,11 @@ then
         createTracks)
             $AL_DIR_TOOLS/createTracks.sh $@
             ;;
-
+            
+        createReport)
+            $AL_DIR_TOOLS/createReport.sh $@
+            ;;
+            
         -h )
             usage
             exit 0
