@@ -127,6 +127,7 @@ function TrackHubGenerate {
                 print $0;}' "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$PARAM_MIN_MAPQ".bedGraph > "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$PARAM_MIN_MAPQ"_tmp1.bedGraph
 	grep -v "type" "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$PARAM_MIN_MAPQ"_tmp1.bedGraph > "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$PARAM_MIN_MAPQ"_tmp2.bedGraph
 	sort -k1,1 -k2,2n "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$PARAM_MIN_MAPQ"_tmp2.bedGraph > "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$PARAM_MIN_MAPQ"_tmp3.bedGraph
+	cp "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$PARAM_MIN_MAPQ"_tmp3.bedGraph "$PARAM_INPUT_PREFIX"_total.bedGraph
 	$AL_BIN_BEDGRAPH_TO_BW "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$PARAM_MIN_MAPQ"_tmp3.bedGraph "$PARAM_CHROM_SIZES" ./Track_Hub/"$PARAM_GENOME"/"$PARAM_INPUT_PREFIX"_total.bw
 
 	### code adapted from Aaron Bogutz, Louis Lefebvre lab (UBC)
@@ -146,11 +147,11 @@ TrackHubGenerate
 
 
 
-#function generateRPKM {
+function generateRPKM {
 #	$AL_BIN_PYTHON $AL_BIN_RPKMCOUNT -i "$PARAM_PREFIX".bam -r "$PARAM_INTERVALS" -o "$PARAM_PREFIX" -q "$PARAM_MINMAPQ" -e
 #}
 
-#function generateRPKMcustom {
+function generateAllelicCoverageAndRPKM {
 #input gff file
 #input bedGraph files from 1) bedtools genomecov (total.bedgraph) and 2) alea project (strain1.bedgraph strain2.bedgraph)
 #convert to smart format: unique "genes" i.e. no isoforms (done in Python) BY EXON
@@ -159,4 +160,21 @@ TrackHubGenerate
 #divide the total.bedgraph column by the calculated mRNA size 
 #report the strain1.bedgraph and strain2.bedgraph columns as COVERAGE
 #calculate final column: parental_skew / parental_ratio / bias (strain2/(strain1+2)
-#}
+
+	$AL_BIN_BEDTOOLS coverage -a "$PARAM_INTERVALS" -b "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1".bedGraph > "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1"_intervalCoverage_tmp1.tsv
+	awk -F"\t" '{BEGIN OFS="\t"} {print $1, $2, $3, $4, $5, $6, $7, $8*$9}' "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1"_intervalCoverage_tmp1.tsv > "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1"_intervalCoverage_tmp2.tsv
+	grep -v "#" "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1"_intervalCoverage_tmp2.tsv | sort -k1,1 -k2,2n > "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1"_intervalCoverage_tmp3.tsv
+
+	
+	#$AL_BIN_BEDTOOLS coverage -a "$PARAM_INTERVALS" -b "$PARAM_INPUT_PREFIX"_total.bedGraph > "$PARAM_INPUT_PREFIX"_total_intervalCoverage_tmp1.tsv
+	#awk -F"\t" '{BEGIN OFS="\t"} {print $1, $2, $3, $4, $5, $6, $7, $8*$9/$7}' "$PARAM_INPUT_PREFIX"_total_intervalCoverage_tmp1.tsv > "$PARAM_INPUT_PREFIX"_total_intervalCoverage_tmp2.tsv
+
+
+
+	#join tables into one file
+	echo "#chr	start	end	strand	Name	GeneID	exonLength	"$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1"_allelicCoverage	"$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN2"_allelicCoverage	"$PARAM_INPUT_PREFIX"_RPKM > "$PARAM_INPUT_PREFIX"_intervalAnalysisTable.tsv
+	join -a1 -a2 -a3 -1 5 -2 5 -3 5 -o 1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.8,3.8 -e "0" "$PARAM_INPUT_PREFIX"_total_intervalCoverage_tmp2.tsv "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN1"_intervalCoverage_tmp2.tsv "$PARAM_INPUT_PREFIX"_"$PARAM_STRAIN2"_intervalCoverage_tmp2.tsv >> "$PARAM_INPUT_PREFIX"_intervalAnalysisTable.tsv
+	"$PARAM_INPUT_PREFIX"_intervalAnalysis.tsv
+}
+
+
