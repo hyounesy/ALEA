@@ -159,6 +159,27 @@ RUN wget -q http://www.bioinformatics.babraham.ac.uk/projects/bismark/bismark_v0
 
 
 ###########################################################################
+# tophat2-2.1.1
+###########################################################################
+
+WORKDIR /tmp
+RUN wget -q wget http://ccb.jhu.edu/software/tophat/downloads/tophat-2.1.1.Linux_x86_64.tar.gz && \
+	tar -xf tophat-2.1.1.Linux_x86_64.tar.gz -C /opt && \
+	rm -f tophat-2.1.1.Linux_x86_64.tar.gz
+
+
+###########################################################################
+# STAR-2.4.0i
+###########################################################################
+
+WORKDIR /tmp
+RUN wget -q https://github.com/alexdobin/STAR/archive/STAR_2.4.0i.tar.gz && \
+  tar -xf /opt/star/STAR_2.4.0i.tar.gz -C /opt && \
+  make STAR -C /opt/star/STAR-STAR_2.4.0i/source && \
+  rm -f STAR_2.4.0i.tar.gz
+
+
+###########################################################################
 # ALEA 1.9.6
 ###########################################################################
 
