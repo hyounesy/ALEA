@@ -106,7 +106,7 @@ function BAM2WIGbedtools {
     }' "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bedGraph > "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".wig
     bgzip -c "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".wig > "$PARAM_INPUT_PREFIX".wig.gz
     rm "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".wig
-    mv "$PARAM_INPUT_PREFIX".wig.gz "$PARAM_INPUT_PREFIX".bedGraph "$PARAM_INPUT_PREFIX".bw ./"$PARAM_OUTPUT_DIR"/
+    mv "$PARAM_INPUT_PREFIX".wig.gz "$PARAM_INPUT_PREFIX".bedGraph "$PARAM_INPUT_PREFIX".bw "$PARAM_OUTPUT_DIR"/
 }
 
 ### Converts filtered bam files to wig
