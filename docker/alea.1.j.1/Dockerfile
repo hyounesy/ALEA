@@ -32,7 +32,10 @@ RUN apt-get update && \
   build-essential \
   gcc-multilib \
   apt-utils \
-  vim
+  vim \
+  python \
+  python-dev \
+  python-setuptools
 
 
 ##########################################################################################

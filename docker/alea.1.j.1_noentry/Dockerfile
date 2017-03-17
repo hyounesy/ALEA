@@ -2,12 +2,12 @@
 # Dockerfile
 #
 # Software:         ALEA
-# Software Version: alea.1.j.1
+# Software Version: alea.1.j.1_noentry
 # Description:      A toolbox for Allele-specific Epigenomics Analysis
 # Base Image:       java:7
-# Build Cmd:        docker build -t taskkoike/alea:1.j.1 /path/to/dockerfile-directory/
-# Pull Cmd:         docker pull taskkoike/alea:1.j.1
-# Run Cmd:          docker run -it taskkoike/alea:1.j.1
+# Build Cmd:        docker build -t taskkoike/alea:1.j.1_noentry /path/to/dockerfile-directory/
+# Pull Cmd:         docker pull taskkoike/alea:1.j.1_noentry
+# Run Cmd:          docker run -it taskkoike/alea:1.j.1_noentry
 ##########################################################################################
 
 FROM java:7
@@ -32,7 +32,10 @@ RUN apt-get update && \
   build-essential \
   gcc-multilib \
   apt-utils \
-  vim
+  vim \
+  python \
+  python-dev \
+  python-setuptools
 
 
 ##########################################################################################
