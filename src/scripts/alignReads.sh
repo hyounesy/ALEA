@@ -364,7 +364,7 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
         
         if [ $AL_USE_BWA = 1 ]; then
             aleaCheckFileExists "$PARAM_GENOME"
-	    echo "aligning to concatenated insilico genome"
+            printProgress "aligning to concatenated insilico genome"
             alignReadsBWA_S "$PARAM_FASTQ_FILE" "$PARAM_GENOME" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"
             aleaCheckFileExists "$PARAM_REFERENCE_GENOME"
             printProgress "aligning to reference genome"
@@ -440,26 +440,28 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
             mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1".CpG_report.txt "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_preProject.CpG_report.txt
             mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2".CpG_report.txt "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"_preProject.CpG_report.txt
         
-       	elif [ $AL_USE_STAR = 1 ]; then
-	    echo "align to concatenated insilico genome"
+        elif [ $AL_USE_STAR = 1 ]; then
+            printProgress "align to concatenated insilico genome"
             aleaCheckDirExists "$PARAM_GENOME"
             $AL_BIN_STAR --runMode alignReads --genomeDir "$PARAM_GENOME" "$AL_STAR_ALN_PARAMS" --readFilesIn "$PARAM_FASTQ_FILE"
             mv Aligned.out.sam "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
             mv Log.out "$PARAM_BAM_PREFIX"_STAR_RunParameters.tsv
             mv Log.final.out "$PARAM_BAM_PREFIX"_STAR_AlignmentSummary.tsv
-            echo "align to reference genome"
-	    aleaCheckDirExists "$PARAM_REFERENCE_GENOME"
-            $AL_BIN_STAR --runMode alignReads --genomeDir "$PARAM_REFERENCE_GENOME" "$AL_STAR_ALN_PARAMS" --readFilesIn "$PARAM_FASTQ_FILE"
+            printProgress "align to reference genome"
+            aleaCheckDirExists "$PARAM_REFERENCE_GENOME"
+            $AL_BIN_STAR --runMode alignReads --genomeDir "$PARAM_REFERENCE_GENOME" "$AL_STAR_ALN_TOTAL_PARAMS" --readFilesIn "$PARAM_FASTQ_FILE"
             mv Aligned.out.sam "$PARAM_BAM_PREFIX"_total.sam
             $AL_BIN_SAMTOOLS view -bSu "$PARAM_BAM_PREFIX"_total.sam | $AL_BIN_SAMTOOLS sort - "$PARAM_BAM_PREFIX"_total
             $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
             mv Log.out "$PARAM_BAM_PREFIX"_total_STAR_referenceRunParameters.tsv
             mv Log.final.out "$PARAM_BAM_PREFIX"_total_STAR_referenceAlignmentSummary.tsv
-	    echo "detecting allelic reads"
-	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" "== 255" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
-    	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" "== 255" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
-	    rm SJ.out.tab Log.progress.out
-
+            printProgress "detecting allelic reads"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" "== 255" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" "== 255" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
+            if [ $AL_DEBUG = 0 ]; then
+                rm SJ.out.tab Log.progress.out
+            fi
+        
         elif [ $AL_USE_TOPHAT2 = 1 ]; then
             printProgress "align to insilico concatenated genome"
             aleaCheckFileExists "$PARAM_GENOME".1.bt2l
@@ -489,7 +491,7 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
         
         if [ $AL_USE_BWA = 1 ]; then
             aleaCheckFileExists $PARAM_GENOME
-	    echo "aligning reads to concatenated insilico genome"
+            printProgress "aligning reads to concatenated insilico genome"
             alignReadsBWA_P $PARAM_FASTQ_FILE1 $PARAM_FASTQ_FILE2 $PARAM_GENOME "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"
             aleaCheckFileExists "$PARAM_REFERENCE_GENOME"
             printProgress "aligning reads to reference genome"
@@ -508,7 +510,7 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
         
         elif [ $AL_USE_BOWTIE2 = 1 ]; then
             aleaCheckFileExists "$PARAM_GENOME".1.bt2l
-	    echo "align to the insilico concatenated genome"
+            printProgress "align to the insilico concatenated genome"
             $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2 -S "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
             printProgress "align to the reference genome"
             aleaCheckFileExists "$PARAM_REFERENCE_GENOME".1.bt2*
@@ -569,27 +571,29 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
             mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2".CpG_report.txt "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"_preProject.CpG_report.txt
         
         elif [ $AL_USE_STAR = 1 ]; then
-	    echo "align to the insilico concatenated genome"
+            printProgress "align to the insilico concatenated genome"
             aleaCheckDirExists "$PARAM_GENOME"
             $AL_BIN_STAR --runMode alignReads --genomeDir "$PARAM_GENOME" "$AL_STAR_ALN_PARAMS" --readFilesIn "$PARAM_FASTQ_FILE1" "$PARAM_FASTQ_FILE2"
             mv Aligned.out.sam "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
             mv Log.out "$PARAM_BAM_PREFIX"_STAR_RunParameters.tsv
             mv Log.final.out "$PARAM_BAM_PREFIX"_STAR_AlignmentSummary.tsv
- 	    echo "align to the reference genome"
-	    aleaCheckDirExists "$PARAM_REFERENCE_GENOME"
-            $AL_BIN_STAR --runMode alignReads --genomeDir "$PARAM_REFERENCE_GENOME" "$AL_STAR_ALN_PARAMS" --readFilesIn "$PARAM_FASTQ_FILE1" "$PARAM_FASTQ_FILE2"
+            printProgress "align to the reference genome"
+            aleaCheckDirExists "$PARAM_REFERENCE_GENOME"
+            $AL_BIN_STAR --runMode alignReads --genomeDir "$PARAM_REFERENCE_GENOME" "AL_STAR_ALN_TOTAL_PARAMS" --readFilesIn "$PARAM_FASTQ_FILE1" "$PARAM_FASTQ_FILE2"
             mv Aligned.out.sam "$PARAM_BAM_PREFIX"_total.sam
             $AL_BIN_SAMTOOLS view -bSu "$PARAM_BAM_PREFIX"_total.sam | $AL_BIN_SAMTOOLS sort - "$PARAM_BAM_PREFIX"_total
             $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
             mv Log.out "$PARAM_BAM_PREFIX"_total_STAR_referenceRunParameters.tsv
             mv Log.final.out "$PARAM_BAM_PREFIX"_total_STAR_referenceAlignmentSummary.tsv
-	    echo "detecting allelic reads"
-	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" "== 255" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
-    	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" "== 255" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
-	    rm SJ.out.tab Log.progress.out
-	    
-	elif [ $AL_USE_TOPHAT2 = 1 ]; then
-	    echo "align to the insilico concatenated genome"
+            printProgress "detecting allelic reads"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" "== 255" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" "== 255" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
+            if [ $AL_DEBUG = 0 ]; then
+                rm SJ.out.tab Log.progress.out
+            fi
+        
+        elif [ $AL_USE_TOPHAT2 = 1 ]; then
+            printProgress "align to the insilico concatenated genome"
             aleaCheckFileExists "$PARAM_GENOME".1.bt2l
             $AL_BIN_TOPHAT2 $AL_TOPHAT2_ALN_PARAMS --output-dir ./tophat_out_concat "$PARAM_GENOME" "$PARAM_FASTQ_FILE1" "$PARAM_FASTQ_FILE2"
             mv ./tophat_out_concat/accepted_hits.sam ./"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
