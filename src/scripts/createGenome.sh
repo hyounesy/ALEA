@@ -84,7 +84,7 @@ function createFastaIndex {
     elif [ $AL_USE_BISMARK = 1 ]; then
         aleaCreateDir "$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN"
         cp "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN"
-        $AL_BIN_BISMARK_INDEX "$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN"
+        $AL_BIN_BISMARK_INDEX --bowtie2 --path_to_bowtie $AL_DIR_TOOLS "$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN"
     elif [ $AL_USE_STAR = 1 ]; then
         aleaCreateDir "$PARAM_OUTPUT_DIR"/STAR-index/"$PARAM_STRAIN"
         $AL_BIN_STAR --runMode genomeGenerate --runThreadN 36 --genomeDir "$PARAM_OUTPUT_DIR"/STAR-index/"$PARAM_STRAIN" --genomeFastaFiles "$PARAM_FASTA"
@@ -134,7 +134,8 @@ function createRefStrRefmap {
         aleaCheckFileExists $PARAM_INPUT_FASTA
         aleaCreateDir $PARAM_OUTPUT_DIR
         
-        if [ ! -d "$PARAM_INPUT_FASTA" ]; then
+        if [ ! -f "$PARAM_INPUT_FASTA".fai ]; then
+            printProgress "[createGenome] Indexing Reference"
             $AL_BIN_SAMTOOLS faidx "$PARAM_INPUT_FASTA"
         fi
         
@@ -212,7 +213,8 @@ function createRefStrRefmap {
         aleaCheckFileExists $PARAM_INPUT_FASTA
         aleaCreateDir $PARAM_OUTPUT_DIR
         
-        if [ ! -d "$PARAM_INPUT_FASTA" ]; then
+        if [ ! -f "$PARAM_INPUT_FASTA".fai ]; then
+            printProgress "[createGenome] Indexing Reference"
             $AL_BIN_SAMTOOLS faidx "$PARAM_INPUT_FASTA"
         fi
         
@@ -238,8 +240,8 @@ function createRefStrRefmap {
             VAR_FASTA2="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN2".fasta
             cp "$PARAM_INPUT_FASTA" "$VAR_FASTA2"
             cp "$PARAM_INPUT_FASTA".fai "$VAR_FASTA2".fai
-            # create a refmap file for the reference strain
-            createRefStrRefmap "$VAR_FASTA1".fai "$VAR_FASTA1".refmap
+            # create a refmap file for reference strain
+            createRefStrRefmap "$VAR_FASTA2".fai "$VAR_FASTA2".refmap
         else
             VAR_FASTA2="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN2".fasta
             # create insilico genome for strain 2
