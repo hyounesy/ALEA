@@ -332,6 +332,27 @@ function detectAllelicSeparate {
 }
 
 #------------------------------------------------------------------------------------
+# detect the allelic cytosine information in the concatenated genome method
+#------------------------------------------------------------------------------------
+function detectAllelicCytoConcatenated {
+    
+    printProgress "Started detectAllelicCytoConcatenated"
+    
+    local PARAM_INPUT_METHYL=$1
+    local PARAM_STRAIN=$2
+    local PARAM_OUT_PREFIX=$3
+    
+    aleaCheckFileExists "$PARAM_INPUT_METHYL"
+    
+    cat "$PARAM_INPUT_METHYL" \
+        | awk -v ref="$PARAM_STRAIN" '($0 ~ ref) {print $0}' \
+        | sed 's/'"$PARAM_STRAIN"'_//g' \
+        >> "$PARAM_OUT_PREFIX".CpG_report.txt
+    
+    printProgress "Finished detectAllelicCytoConcatenated"
+}
+
+#------------------------------------------------------------------------------------
 # alignReads
 #------------------------------------------------------------------------------------
 
@@ -371,8 +392,53 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
             printProgress "detecting allelic reads"
             detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" "== 255" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
             detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" "== 255" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
+        
+        elif [ $AL_USE_BISMARK = 1 ]; then
+            VAR_BASENAME=`basename $PARAM_BAM_PREFIX`
+            VAR_DIRNAME=`dirname $PARAM_BAM_PREFIX`
+            VAR_q=$AL_BAM2WIG_PARAM_MIN_QUALITY
+            VAR_F=$AL_BAM2WIG_PARAM_FILTERING_FLAG
+            printProgress "align to the insilico concatenated genome"
             aleaCheckDirExists "$PARAM_GENOME"/Bisulfite_Genome
-            $AL_BIN_BISMARK $AL_BISMARK_ALN_PARAMS --basename "${PARAM_BAM_PREFIX##*/}"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2" -o "${PARAM_BAM_PREFIX%/*}" "$PARAM_GENOME" $PARAM_FASTQ_FILE
+            $AL_BIN_BISMARK $AL_BISMARK_ALN_PARAMS --basename "$VAR_BASENAME"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2" -o $VAR_DIRNAME $PARAM_GENOME $PARAM_FASTQ_FILE
+            printProgress "aligning to reference genome"
+            aleaCheckDirExists "$PARAM_REFERENCE_GENOME"/Bisulfite_Genome
+            $AL_BIN_BISMARK $AL_BISMARK_ALN_TOTAL_PARAMS --basename "$VAR_BASENAME"_total -o $VAR_DIRNAME $PARAM_REFERENCE_GENOME $PARAM_FASTQ_FILE
+            $AL_BIN_SAMTOOLS view -bShu "$PARAM_BAM_PREFIX"_total.sam | $AL_BIN_SAMTOOLS sort - "$PARAM_BAM_PREFIX"_total
+            $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
+            printProgress "detecting allelic reads"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" ">= 0" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" ">= 0" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
+            printProgress "extract methylation of the insilico concatenated genome"
+            $AL_BIN_SAMTOOLS view -Sbh -F $VAR_F -q $VAR_q "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam \
+                > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".bam
+            $AL_BIN_BISMARK_EXTRACT -s --comprehensive --cytosine_report --samtools_path $AL_DIR_TOOLS -o $VAR_DIRNAME --genome_folder $PARAM_GENOME \
+                "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".bam
+            mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".CpG_report.txt \
+                "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q"CpG_report.unsorted.txt
+            sort -k1,1 -k2,2n "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".CpG_report.unsorted.txt \
+                > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".CpG_report.txt
+            if [ $AL_DEBUG = 0 ]; then
+                rm "$VAR_DIRNAME"/C??_context_*.txt
+                rm "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".CpG_report.unsorted.txt
+            fi
+            printProgress "extract methylation of reference genome"
+            $AL_BIN_SAMTOOLS view -Sbh -F $VAR_F -q $VAR_q "$PARAM_BAM_PREFIX"_total.sam > "$PARAM_BAM_PREFIX"_total_F"$VAR_F"_q"$VAR_q".bam
+            $AL_BIN_BISMARK_EXTRACT -s --comprehensive --cytosine_report --samtools_path $AL_DIR_TOOLS -o $VAR_DIRNAME --genome_folder $PARAM_REFERENCE_GENOME \
+                "$PARAM_BAM_PREFIX"_total_F"$VAR_F"_q"$VAR_q".bam
+            mv "$PARAM_BAM_PREFIX"_total_F"$VAR_F"_q"$VAR_q".CpG_report.txt "$PARAM_BAM_PREFIX"_total_F"$VAR_F"_q"$VAR_q".CpG_report.unsorted.txt
+            sort -k1,1 -k2,2n "$PARAM_BAM_PREFIX"_total_F"$VAR_F"_q"$VAR_q".CpG_report.unsorted.txt > "$PARAM_BAM_PREFIX"_total.CpG_report.txt
+            if [ $AL_DEBUG = 0 ]; then
+                rm "$VAR_DIRNAME"/C??_context_*.txt
+                rm "$PARAM_BAM_PREFIX"_total_F"$VAR_F"_q"$VAR_q".CpG_report.unsorted.txt
+            fi
+            printProgress "detecting allelic cytosines information"
+            detectAllelicCytoConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".CpG_report.txt \
+                $PARAM_STRAIN1 "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
+            detectAllelicCytoConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".CpG_report.txt \
+                $PARAM_STRAIN2 "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
+            mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1".CpG_report.txt "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_preProject.CpG_report.txt
+            mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2".CpG_report.txt "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"_preProject.CpG_report.txt
         
        	elif [ $AL_USE_STAR = 1 ]; then
 	    echo "align to concatenated insilico genome"
@@ -460,8 +526,47 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
             VAR_F=$AL_BAM2WIG_PARAM_FILTERING_FLAG
             printProgress "align to the insilico concatenated genome"
             aleaCheckDirExists "$PARAM_GENOME"/Bisulfite_Genome
-            $AL_BIN_BISMARK $AL_BISMARK_ALN_PARAMS --basename "${PARAM_BAM_PREFIX##*/}"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2" -o "${PARAM_BAM_PREFIX%/*}" "$PARAM_GENOME" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2
-            mv "$PARAM_BAM_PREFIX"/"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_pe.sam "$PARAM_BAM_PREFIX"/"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+            $AL_BIN_BISMARK $AL_BISMARK_ALN_PARAMS --basename "$VAR_BASENAME"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2" -o $VAR_DIRNAME $PARAM_GENOME -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2
+            mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_pe.sam "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+            printProgress "aligning to reference genome"
+            aleaCheckDirExists "$PARAM_REFERENCE_GENOME"/Bisulfite_Genome
+            $AL_BIN_BISMARK $AL_BISMARK_ALN_TOTAL_PARAMS --basename "$VAR_BASENAME"_total -o $VAR_DIRNAME $PARAM_REFERENCE_GENOME -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2
+            mv "$PARAM_BAM_PREFIX"_total_pe.sam "$PARAM_BAM_PREFIX"_total.sam
+            $AL_BIN_SAMTOOLS view -bShu "$PARAM_BAM_PREFIX"_total.sam | $AL_BIN_SAMTOOLS sort - "$PARAM_BAM_PREFIX"_total
+            $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
+            printProgress "detecting allelic reads"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" ">= 0" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" ">= 0" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
+            printProgress "extract methylation of the insilico concatenated genome"
+            $AL_BIN_SAMTOOLS view -Sbh -F $VAR_F -q $VAR_q "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam \
+                > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".bam
+            $AL_BIN_BISMARK_EXTRACT -p --comprehensive --cytosine_report --samtools_path $AL_DIR_TOOLS -o $VAR_DIRNAME --genome_folder $PARAM_GENOME \
+                "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".bam
+            mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".CpG_report.txt \
+                "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".CpG_report.unsorted.txt
+            sort -k1,1 -k2,2n "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".CpG_report.unsorted.txt \
+                > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".CpG_report.txt
+            if [ $AL_DEBUG = 0 ]; then
+                rm "$VAR_DIRNAME"/C??_context_*.txt
+                rm "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".CpG_report.unsorted.txt
+            fi
+            printProgress "extract methylation of reference genome"
+            $AL_BIN_SAMTOOLS view -Sbh -F $VAR_F -q $VAR_q "$PARAM_BAM_PREFIX"_total.sam > "$PARAM_BAM_PREFIX"_total_F"$VAR_F"_q"$VAR_q".bam
+            $AL_BIN_BISMARK_EXTRACT -p --comprehensive --cytosine_report --samtools_path $AL_DIR_TOOLS -o $VAR_DIRNAME --genome_folder $PARAM_REFERENCE_GENOME \
+                "$PARAM_BAM_PREFIX"_total_F"$VAR_F"_q"$VAR_q".bam
+            mv "$PARAM_BAM_PREFIX"_total_F"$VAR_F"_q"$VAR_q".CpG_report.txt "$PARAM_BAM_PREFIX"_total_F"$VAR_F"_q"$VAR_q".CpG_report.unsorted.txt
+            sort -k1,1 -k2,2n "$PARAM_BAM_PREFIX"_total_F"$VAR_F"_q"$VAR_q".CpG_report.unsorted.txt > "$PARAM_BAM_PREFIX"_total.CpG_report.txt
+            if [ $AL_DEBUG = 0 ]; then
+                rm "$VAR_DIRNAME"/C??_context_*.txt
+                rm "$PARAM_BAM_PREFIX"_total_F"$VAR_F"_q"$VAR_q".CpG_report.unsorted.txt
+            fi
+            printProgress "detecting allelic cytosines information"
+            detectAllelicCytoConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".CpG_report.txt \
+                $PARAM_STRAIN1 "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
+            detectAllelicCytoConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_F"$VAR_F"_q"$VAR_q".CpG_report.txt \
+                $PARAM_STRAIN2 "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
+            mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1".CpG_report.txt "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_preProject.CpG_report.txt
+            mv "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2".CpG_report.txt "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"_preProject.CpG_report.txt
         
         elif [ $AL_USE_STAR = 1 ]; then
 	    echo "align to the insilico concatenated genome"
