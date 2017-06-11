@@ -46,7 +46,7 @@ fi
 #concatenate two insilico genomes to make the 
 function concatFasta {
     printProgress "[concatFasta] Started"
-
+    
     local PARAM_FASTA1=$1
     local PARAM_FASTA2=$2
     local PARAM_STRAIN1=$3
@@ -70,9 +70,9 @@ function createFastaIndex {
     local PARAM_FASTA=$1
     local PARAM_STRAIN=$2
     local PARAM_OUTPUT_DIR=$3
-
+    
     printProgress "[createFastaIndex] Started"
-
+    
     if [ $AL_USE_BWA = 1 ]; then
         $AL_BIN_BWA_INDEX $PARAM_FASTA
     elif [ $AL_USE_BOWTIE1 = 1 ]; then
@@ -89,19 +89,19 @@ function createFastaIndex {
         aleaCreateDir "$PARAM_OUTPUT_DIR"/STAR-index/"$PARAM_STRAIN"
         $AL_BIN_STAR --runMode genomeGenerate --runThreadN 36 --genomeDir "$PARAM_OUTPUT_DIR"/STAR-index/"$PARAM_STRAIN" --genomeFastaFiles "$PARAM_FASTA"
     elif [ $AL_USE_TOPHAT2 = 1 ]; then
-    	aleaCreateDir "$PARAM_OUTPUT_DIR"/bowtie2-index
+        aleaCreateDir "$PARAM_OUTPUT_DIR"/bowtie2-index
         $AL_BIN_BOWTIE2_INDEX --large-index "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"$PARAM_STRAIN"
     fi
-
+    
     printProgress "[createFastaIndex] Done"
 }
 
 function createRefStrRefmap {
     local PARAM_FASTA_IDX=$1
     local PARAM_OUTPUT_REFMAP=$2
-
+    
     printProgress "[createRefStrRefmap] Started"
-
+    
     awk '
         BEGIN{
             FS = "\t"
@@ -109,10 +109,10 @@ function createRefStrRefmap {
         }
         {
             print ">" $1
-	        print "0", "0", $2
+            print "0", "0", $2
         }
     ' "$PARAM_FASTA_IDX" > "$PARAM_OUTPUT_REFMAP"
-
+    
     printProgress "[createRefStrRefmap] Done"
 }
 
@@ -167,7 +167,6 @@ function createRefStrRefmap {
                 rm -f "$VAR_GENOME1_SNPS"*
             fi
         fi
-        
         
         if [ $PARAM_STRAIN2 = $VAR_REFERENCE_STRAIN ]; then
             # copy the reference genome as the reference stain name
@@ -258,7 +257,7 @@ function createRefStrRefmap {
     if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
         VAR_FASTA_CONCAT="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1"_"$PARAM_STRAIN2".fasta
         concatFasta "$VAR_FASTA1" "$VAR_FASTA2" "$PARAM_STRAIN1" "$PARAM_STRAIN2" "$VAR_FASTA_CONCAT"
-    
+        
         $AL_BIN_SAMTOOLS faidx "$VAR_FASTA_CONCAT"
         createFastaIndex "$VAR_FASTA_CONCAT" "$PARAM_STRAIN1"_"$PARAM_STRAIN2" "$PARAM_OUTPUT_DIR"
     fi

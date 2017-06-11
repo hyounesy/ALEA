@@ -17,7 +17,7 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
         if [ $# -eq 7 ]; then
             PARAM_FASTQ_FILE=$2
             PARAM_GENOME=$3
-	    PARAM_REFERENCE_GENOME=$4
+            PARAM_REFERENCE_GENOME=$4
             PARAM_STRAIN1=$5
             PARAM_STRAIN2=$6
             PARAM_BAM_PREFIX=$7
@@ -30,7 +30,7 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
             PARAM_FASTQ_FILE1=$2
             PARAM_FASTQ_FILE2=$3
             PARAM_GENOME=$4
-	    PARAM_REFERENCE_GENOME=$5
+            PARAM_REFERENCE_GENOME=$5
             PARAM_STRAIN1=$6
             PARAM_STRAIN2=$7
             PARAM_BAM_PREFIX=$8
@@ -82,7 +82,7 @@ Usage:
 Options:
     -s              to align single-end reads (requires one input file)
     -p              to align paired-end reads (requires two input files)
-         
+                    
     input_reads_1   the 1st input reads file in fastq.
                     (fastq.gz or bam is supported when using BWA)
                     
@@ -106,13 +106,13 @@ Options:
                     for BWA, specifiy the fasta file.
                     for Bowtie, specify index filename prefix (minus trailing .X.ebwt or .X.bt2)
                     for Bismark, specify genome folder
-		    
+                    
     genome_reference   the reference fasta file previously used for in silico genome creation
                     path to the indexed reference genome.
                     for BWA, specifiy path to the fasta.
                     for Bowtie, specify basename of index file
                     for Bismark, specify genome folder
-		    
+                    
     strain1         name of strain1
                     (e.g. hap1 or CASTEiJ)
                     
@@ -123,7 +123,7 @@ Options:
                     (e.g. ./TSC_H3K36me3 )
 
 Output:
-        
+    
     outputPrefix_strain1_strain2.sam   (when AL_USE_CONCATENATED_GENOME=1)
                                        all reads aligned to the concatenated insilico genome
                                        
@@ -134,14 +134,14 @@ Output:
                                        all reads aligned to the second insilico genome
                                        
     outputPrefix_strain1.bam           allelic reads for strain1 genome (sorted bam)
-    
+                                       
     outputPrefix_strain2.bam           allelic reads for strain2 genome (sorted bam)
 
 Examples:
     (AL_USE_CONCATENATED_GENOME=1, AL_USE_BWA=1)
     alea alignReads -s H3K36me3.fastq C57BL6J_CAST_EiJ.fasta mm10.fasta CAST_EiJ C57BL6J ./H3K36me3
     alea alignReads -p H3K36me3_1.fastq H3K36me3_2.fastq C57BL6J_CAST_EiJ.fasta CAST_EiJ C57BL6J ./H3K36me3
-
+    
     (AL_USE_CONCATENATED_GENOME=0, AL_USE_BWA=1)
     alea alignReads -s H3K36me3.fastq CASTEiJ.fasta C57BL6J.fasta mm10.fasta CAST_EiJ C57BL6J ./H3K36me3
     
@@ -149,7 +149,7 @@ Examples:
     alea alignReads -s H3K36me3.fastq STAR-index/insilico_folder/ STAR-index/reference_folder/ CAST_EiJ C57BL6J ./H3K36me3
     
     (AL_USE_CONCATENATED_GENOME=0, AL_USE_BOWTIE1=1)
-    alea alignReads -s H3K36me3.fastq bowtie2-index/C57BL6J_CAST_EiJ bowtie2-index/mm10 CAST_EiJ C57BL6J ./H3K36me3  
+    alea alignReads -s H3K36me3.fastq bowtie2-index/C57BL6J_CAST_EiJ bowtie2-index/mm10 CAST_EiJ C57BL6J ./H3K36me3
 "
 exit 1
 fi
@@ -171,17 +171,17 @@ function alignReadsBWA_S {
     
     # align to reference genome
     $AL_BIN_BWA aln $AL_BWA_ALN_PARAMS $PARAM_IS_BAM $PARAM_FASTA_FILE $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX".sai
-  
+    
     # generate alignment (single ended)
     $AL_BIN_BWA samse $PARAM_FASTA_FILE "$PARAM_BAM_PREFIX".sai $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX".sam
-  
+    
     # convert SAM to BAM
     #$AL_BIN_SAMTOOLS view -b -S -o "$PARAM_BAM_PREFIX".bam "$PARAM_BAM_PREFIX".sam
-  
+    
     if [ $AL_DEBUG = 0 ]; then
         rm -f "$PARAM_BAM_PREFIX".sai
     fi
-
+    
     # remove temporary files
     if [ -f  "$PARAM_BAM_PREFIX".sam ]
     then
@@ -201,7 +201,7 @@ function alignReadsBWA_P {
     local PARAM_FASTQ_FILE2=$2
     local PARAM_FASTA_FILE=$3
     local PARAM_BAM_PREFIX=$4
-  
+    
     printProgress "[alignReadsBWA_P] Started"
     
     local PARAM_IS_BAM1=""
@@ -209,23 +209,23 @@ function alignReadsBWA_P {
     then
         PARAM_IS_BAM1="-b1"
     fi
-
+    
     local PARAM_IS_BAM2=""
     if [[ "$PARAM_FASTQ_FILE2" == *.bam ]]
     then
         PARAM_IS_BAM2="-b2"
     fi
-
+    
     # align to reference genome
     $AL_BIN_BWA aln $AL_BWA_ALN_PARAMS $PARAM_IS_BAM1 $PARAM_FASTA_FILE $PARAM_FASTQ_FILE1 > "$PARAM_BAM_PREFIX"_1.sai
     $AL_BIN_BWA aln $AL_BWA_ALN_PARAMS $PARAM_IS_BAM2 $PARAM_FASTA_FILE $PARAM_FASTQ_FILE2 > "$PARAM_BAM_PREFIX"_2.sai
-  
+    
     # generate alignment (paired-ended)
     $AL_BIN_BWA sampe $PARAM_FASTA_FILE "$PARAM_BAM_PREFIX"_1.sai "$PARAM_BAM_PREFIX"_2.sai $PARAM_FASTQ_FILE1 $PARAM_FASTQ_FILE2 > "$PARAM_BAM_PREFIX".sam
-  
+    
     # convert SAM to BAM and sort
     #$AL_BIN_SAMTOOLS view -b -S -o "$PARAM_BAM_PREFIX".bam "$PARAM_BAM_PREFIX".sam
-  
+    
     if [ $AL_DEBUG = 0 ]; then
         rm -f "$PARAM_BAM_PREFIX"_1.sai
         rm -f "$PARAM_BAM_PREFIX"_2.sai
@@ -247,7 +247,7 @@ function alignReadsBWA_P {
 function detectAllelicConcatenated {
     
     printProgress "[detectAllelicConcatenated] Started"
-
+    
     local PARAM_INPUT_SAM=$1
     local PARAM_STRAIN=$2
     local PARAM_REFFASTA=$3   
@@ -265,7 +265,7 @@ function detectAllelicConcatenated {
         | awk -v ref="$PARAM_STRAIN" '(($3 ~ ref)&&($5'"$PARAM_QUALITY"')) {print $0}' \
         | sed 's/'"$PARAM_STRAIN"'_//g' \
         >> "$PARAM_OUT_PREFIX".sam
-
+    
     # convert to bam
     $AL_BIN_SAMTOOLS view -bt $PARAM_REFFASTA "$PARAM_OUT_PREFIX".sam > "$PARAM_OUT_PREFIX".unsorted.bam
     
@@ -296,7 +296,7 @@ function detectAllelicSeparate {
     local PARAM_INPUT_SAM2=$2
     local PARAM_OUT_PREFIX1=$3
     local PARAM_OUT_PREFIX2=$4
-
+    
     # extract MAPQ and CIGAR columns to one file
     awk '{print $5"\t"$6}' "$PARAM_INPUT_SAM1" > "$PARAM_INPUT_SAM1".c56
     awk '{print $5"\t"$6}' "$PARAM_INPUT_SAM2" > "$PARAM_INPUT_SAM2".c56
@@ -340,7 +340,7 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
     if [ $PARAM_SINGLE_READS = 1 ]; then
         #align single-end reads to concatenated insilico genome
         aleaCheckFileExists "$PARAM_FASTQ_FILE"
-
+        
         if [ $AL_USE_BWA = 1 ]; then
             aleaCheckFileExists "$PARAM_GENOME"
 	    echo "aligning to concatenated insilico genome"
@@ -355,7 +355,7 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
 	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
     	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
         
-	#elif [ $AL_USE_BOWTIE1 = 1 ]; then
+        #elif [ $AL_USE_BOWTIE1 = 1 ]; then
         #    aleaCheckFileExists "$PARAM_GENOME".1.ebwt
         #    $AL_BIN_BOWTIE1 $AL_BOWTIE1_ALN_PARAMS "$PARAM_GENOME" $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
        	
@@ -422,12 +422,12 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
             
 
         fi
-	
+    
     else #[ $PARAM_SINGLE_READS = 0 ]
         #align paired-end reads to concatenated insilico genome
         aleaCheckFileExists $PARAM_FASTQ_FILE1
         aleaCheckFileExists $PARAM_FASTQ_FILE2
-
+        
         if [ $AL_USE_BWA = 1 ]; then
             aleaCheckFileExists $PARAM_GENOME
 	    echo "aligning reads to concatenated insilico genome"
@@ -447,7 +447,7 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
        #     aleaCheckFileExists "$PARAM_GENOME".1.ebwt
         #    $AL_BIN_BOWTIE1 $AL_BOWTIE1_ALN_PARAMS "$PARAM_GENOME" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2 > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
         
-	elif [ $AL_USE_BOWTIE2 = 1 ]; then
+        elif [ $AL_USE_BOWTIE2 = 1 ]; then
             aleaCheckFileExists "$PARAM_GENOME".1.bt2l
 	    echo "align to the insilico concatenated genome"
             $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2 -S "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
@@ -476,8 +476,8 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
 	    aleaCheckDirExists "$PARAM_REFERENCE_GENOME"
             $AL_BIN_STAR --runMode alignReads --genomeDir "$PARAM_REFERENCE_GENOME" "$AL_STAR_ALN_PARAMS" --readFilesIn "$PARAM_FASTQ_FILE1" "$PARAM_FASTQ_FILE2"
             mv Aligned.out.sam "$PARAM_BAM_PREFIX"_total.sam
-	    $AL_BIN_SAMTOOLS view -bS "$PARAM_BAM_PREFIX"_total.sam > "$PARAM_BAM_PREFIX"_total.bam
-	    $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
+            $AL_BIN_SAMTOOLS view -bSu "$PARAM_BAM_PREFIX"_total.sam | $AL_BIN_SAMTOOLS sort - "$PARAM_BAM_PREFIX"_total
+            $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
             mv Log.out "$PARAM_BAM_PREFIX"_total_STAR_referenceRunParameters.tsv
             mv Log.final.out "$PARAM_BAM_PREFIX"_total_STAR_referenceAlignmentSummary.tsv
 	    echo "detecting allelic reads"
@@ -549,7 +549,7 @@ fi
 #            aleaCheckFileExists "$PARAM_GENOME2".1.bt2
 #            $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME1" $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_all.sam
 #            $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME2" $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"_all.sam
-#	    elif [ $AL_USE_BISMARK = 1 ]; then
+#       elif [ $AL_USE_BISMARK = 1 ]; then
 #            echo -e "\nThe separate method using Bismark for alignment is not supported so far.\n"
 #            exit 1
 #            #aleaCheckDirExists "$PARAM_GENOME1"/Bisulfite_Genome
@@ -579,7 +579,7 @@ fi
 #            aleaCheckFileExists "$PARAM_GENOME2".1.bt2
 #            $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME1" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2 > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_all.sam
 #            $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME2" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2 > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"_all.sam
-#	    elif [ $AL_USE_BISMARK = 1 ]; then
+#       elif [ $AL_USE_BISMARK = 1 ]; then
 #            echo -e "\nThe separate method using Bismark for alignment is not supported so far.\n"
 #            exit 1
 #            #aleaCheckDirExists "$PARAM_GENOME1"/Bisulfite_Genome

@@ -94,15 +94,15 @@ function BAM2WIGbedtools {
     $AL_BIN_SAMTOOLS view -bh -F "$VAR_F" -q "$VAR_q" "$PARAM_INPUT_PREFIX".bam > "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bam
     $AL_BIN_BEDTOOLS genomecov -ibam "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bam -bg -split > "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bedGraph
     $AL_BIN_BEDGRAPH_TO_BW "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bedGraph "$PARAM_CHROM_SIZES" "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bw #output this file for viz
-
+    
     awk 'BEGIN {
-            print "track type=wiggle_0"
+        print "track type=wiggle_0"
     }
     NF == 4 {
-            print "fixedStep chrom="$1" start="$2+1" step=1 span=1"
-            for(i = 0; i < $3-$2; i++) {
-                       print $4
-            }
+        print "fixedStep chrom="$1" start="$2+1" step=1 span=1"
+        for(i = 0; i < $3-$2; i++) {
+            print $4
+        }
     }' "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bedGraph > "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".wig
     bgzip -c "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".wig > "$PARAM_INPUT_PREFIX".wig.gz
     rm "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".wig
@@ -167,9 +167,9 @@ function projectToReferenceGenome {
     
     aleaCheckFileExists "$PARAM_WIG_FILE"
     aleaCheckFileExists "$PARAM_REFMAP_FILE"
-
+    
     printProgress "Started projectToReferenceGenome"
-
+    
     $AL_BIN_ALEA project\
         --input-wig=$PARAM_WIG_FILE\
         --input-refmap=$PARAM_REFMAP_FILE\
@@ -184,9 +184,9 @@ function mergeTwoStrandMethylation {
     local PARAM_SITE_REPORT_FILE=$2
     
     aleaCheckFileExists "$PARAM_CYTESINE_REPORT_FILE"
-
+    
     printProgress "Started mergeTwoStrandMethylation"
-
+    
     awk '
         BEGIN{
             FS = "\t"
@@ -254,13 +254,13 @@ function detectAllelicCytoConcatenated {
 function convertMethylationToWig {
     local PARAM_SITE_REPORT_FILE=$1
     local PARAM_WIG_FILE=$2
-
+    
     local VAR_MIN_DEPTH=$AL_METH2WIG_PARAM_MIN_DEPTH
     
     aleaCheckFileExists "$PARAM_SITE_REPORT_FILE"
-
+    
     printProgress "Started convertMethylationToWig"
-
+    
     awk -v MIN_DEPTH=$VAR_MIN_DEPTH '
         BEGIN{
             FS = "\t"
@@ -273,8 +273,8 @@ function convertMethylationToWig {
         }
         $5 + $6 >= MIN_DEPTH{
             print "fixedStep chrom=" $1 " start=" $2 " step=1 span=1"
-	        for(i = 0; i < $3-$2+1; i++)
-	        	print $4
+            for(i = 0; i < $3-$2+1; i++)
+                print $4
         }
     ' "$PARAM_SITE_REPORT_FILE" > "$PARAM_WIG_FILE"
     
