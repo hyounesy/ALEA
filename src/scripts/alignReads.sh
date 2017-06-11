@@ -303,20 +303,20 @@ function detectAllelicSeparate {
     paste "$PARAM_INPUT_SAM1".c56 "$PARAM_INPUT_SAM2".c56 > "$PARAM_INPUT_SAM1".c56c56
     
     # create output sam headers
-    samtools view -SH "$PARAM_INPUT_SAM1" > "$PARAM_OUT_PREFIX1".unsorted.sam
-    samtools view -SH "$PARAM_INPUT_SAM2" > "$PARAM_OUT_PREFIX2".unsorted.sam
+    $AL_BIN_SAMTOOLS view -SH "$PARAM_INPUT_SAM1" > "$PARAM_OUT_PREFIX1".unsorted.sam
+    $AL_BIN_SAMTOOLS view -SH "$PARAM_INPUT_SAM2" > "$PARAM_OUT_PREFIX2".unsorted.sam
     
     # detect allelic reads
     awk '{if (NR==FNR) {if ($1 > $3 && $4 == "*") a[NR]=1;} else {if (FNR in a) print $0;}}' "$PARAM_INPUT_SAM1".c56c56 "$PARAM_INPUT_SAM1" >> "$PARAM_OUT_PREFIX1".unsorted.sam
     awk '{if (NR==FNR) {if ($3 > $1 && $2 == "*") a[NR]=1;} else {if (FNR in a) print $0;}}' "$PARAM_INPUT_SAM1".c56c56 "$PARAM_INPUT_SAM2" >> "$PARAM_OUT_PREFIX2".unsorted.sam
     
     # create .bam
-    samtools view -bS "$PARAM_OUT_PREFIX1".unsorted.sam > "$PARAM_OUT_PREFIX1".unsorted.bam
-    samtools view -bS "$PARAM_OUT_PREFIX2".unsorted.sam > "$PARAM_OUT_PREFIX2".unsorted.bam
+    $AL_BIN_SAMTOOLS view -bS "$PARAM_OUT_PREFIX1".unsorted.sam > "$PARAM_OUT_PREFIX1".unsorted.bam
+    $AL_BIN_SAMTOOLS view -bS "$PARAM_OUT_PREFIX2".unsorted.sam > "$PARAM_OUT_PREFIX2".unsorted.bam
     
     # sort .bam
-    samtools sort "$PARAM_OUT_PREFIX1".unsorted.bam "$PARAM_OUT_PREFIX1"
-    samtools sort "$PARAM_OUT_PREFIX2".unsorted.bam "$PARAM_OUT_PREFIX2"
+    $AL_BIN_SAMTOOLS sort "$PARAM_OUT_PREFIX1".unsorted.bam "$PARAM_OUT_PREFIX1"
+    $AL_BIN_SAMTOOLS sort "$PARAM_OUT_PREFIX2".unsorted.bam "$PARAM_OUT_PREFIX2"
     
     # remove temp files
     if [ $AL_DEBUG = 0 ]; then
@@ -345,21 +345,32 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
             aleaCheckFileExists "$PARAM_GENOME"
 	    echo "aligning to concatenated insilico genome"
             alignReadsBWA_S "$PARAM_FASTQ_FILE" "$PARAM_GENOME" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"
-	    aleaCheckFileExists "$PARAM_REFERENCE_GENOME"
-	    echo "aligning to reference genome"
-    	    $AL_BIN_BWA aln "$PARAM_REFERENCE_GENOME" "$PARAM_FASTQ_FILE" > "$PARAM_BAM_PREFIX"_total.sai
-    	    $AL_BIN_BWA samse "$PARAM_REFERENCE_GENOME" "$PARAM_BAM_PREFIX"_total.sai $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX"_total.sam
-	    $AL_BIN_SAMTOOLS view -bS "$PARAM_BAM_PREFIX"_total.sam > "$PARAM_BAM_PREFIX"_total.bam
-	    $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
-	    echo "detecting allelic reads"
-	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
-    	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
+            aleaCheckFileExists "$PARAM_REFERENCE_GENOME"
+            printProgress "aligning to reference genome"
+            $AL_BIN_BWA aln "$AL_BWA_ALN_TOTAL_PARAMS" "$PARAM_REFERENCE_GENOME" "$PARAM_FASTQ_FILE" > "$PARAM_BAM_PREFIX"_total.sai
+            $AL_BIN_BWA samse "$PARAM_REFERENCE_GENOME" "$PARAM_BAM_PREFIX"_total.sai $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX"_total.sam
+            $AL_BIN_SAMTOOLS view -bSu "$PARAM_BAM_PREFIX"_total.sam | $AL_BIN_SAMTOOLS sort - "$PARAM_BAM_PREFIX"_total
+            $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
+            printProgress "detecting allelic reads"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
         
         #elif [ $AL_USE_BOWTIE1 = 1 ]; then
         #    aleaCheckFileExists "$PARAM_GENOME".1.ebwt
         #    $AL_BIN_BOWTIE1 $AL_BOWTIE1_ALN_PARAMS "$PARAM_GENOME" $PARAM_FASTQ_FILE > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
-       	
-	elif [ $AL_USE_BISMARK = 1 ]; then
+        
+        elif [ $AL_USE_BOWTIE2 = 1 ]; then
+            aleaCheckFileExists "$PARAM_GENOME".1.bt2l
+            printProgress "align to insilico concatenated genome"
+            $AL_BIN_BOWTIE2 "$AL_BOWTIE2_ALN_PARAMS" -x "$PARAM_GENOME" $PARAM_FASTQ_FILE -S "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+            printProgress "align to reference genome"
+            aleaCheckFileExists "$PARAM_REFERENCE_GENOME".1.bt2*
+            $AL_BIN_BOWTIE2 "$AL_BOWTIE2_ALN_TOTAL_PARAMS" -x "$PARAM_REFERENCE_GENOME" $PARAM_FASTQ_FILE -S "$PARAM_BAM_PREFIX"_total.sam
+            $AL_BIN_SAMTOOLS view -bSu "$PARAM_BAM_PREFIX"_total.sam | $AL_BIN_SAMTOOLS sort - "$PARAM_BAM_PREFIX"_total
+            $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
+            printProgress "detecting allelic reads"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" "== 255" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" "== 255" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
             aleaCheckDirExists "$PARAM_GENOME"/Bisulfite_Genome
             $AL_BIN_BISMARK $AL_BISMARK_ALN_PARAMS --basename "${PARAM_BAM_PREFIX##*/}"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2" -o "${PARAM_BAM_PREFIX%/*}" "$PARAM_GENOME" $PARAM_FASTQ_FILE
         
@@ -374,8 +385,8 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
 	    aleaCheckDirExists "$PARAM_REFERENCE_GENOME"
             $AL_BIN_STAR --runMode alignReads --genomeDir "$PARAM_REFERENCE_GENOME" "$AL_STAR_ALN_PARAMS" --readFilesIn "$PARAM_FASTQ_FILE"
             mv Aligned.out.sam "$PARAM_BAM_PREFIX"_total.sam
-	    $AL_BIN_SAMTOOLS view -bS "$PARAM_BAM_PREFIX"_total.sam > "$PARAM_BAM_PREFIX"_total.bam
-	    $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
+            $AL_BIN_SAMTOOLS view -bSu "$PARAM_BAM_PREFIX"_total.sam | $AL_BIN_SAMTOOLS sort - "$PARAM_BAM_PREFIX"_total
+            $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
             mv Log.out "$PARAM_BAM_PREFIX"_total_STAR_referenceRunParameters.tsv
             mv Log.final.out "$PARAM_BAM_PREFIX"_total_STAR_referenceAlignmentSummary.tsv
 	    echo "detecting allelic reads"
@@ -384,43 +395,25 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
 	    rm SJ.out.tab Log.progress.out
 
         elif [ $AL_USE_TOPHAT2 = 1 ]; then
-	    echo "align to insilico concatenated genome"
+            printProgress "align to insilico concatenated genome"
             aleaCheckFileExists "$PARAM_GENOME".1.bt2l
-            $AL_BIN_TOPHAT2 $AL_TOPHAT2_ALN_PARAMS "$PARAM_GENOME" $PARAM_FASTQ_FILE
-	    mv ./tophat_out/accepted_hits.sam "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
-	    mv ./tophat_out/align_summary.txt ./"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_alignSummary.txt
-	    echo "align to reference genome"
-	    aleaCheckFileExists "$PARAM_REFERENCE_GENOME".1.bt2l
-            $AL_BIN_TOPHAT2 --no-sort-bam --no-convert-bam "$PARAM_REFERENCE_GENOME" $PARAM_FASTQ_FILE
-	    mv ./tophat_out/accepted_hits.sam "$PARAM_BAM_PREFIX"_total.sam
-	    mv ./tophat_out/align_summary.txt ./"$PARAM_BAM_PREFIX"_total_alignSummary.txt
-	    $AL_BIN_SAMTOOLS view -bS "$PARAM_BAM_PREFIX"_total.sam > "$PARAM_BAM_PREFIX"_total.bam
-	    $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
-	    echo "detecting allelic reads"
-	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
-    	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
-	    rm -r tophat_out
-	    
-	elif [ $AL_USE_BOWTIE2 = 1 ]; then
-            aleaCheckFileExists "$PARAM_GENOME".1.bt2l
-	    echo "align to insilico concatenated genome"
-            $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME" $PARAM_FASTQ_FILE -S "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
-            aleaCheckFileExists "$PARAM_REFERENCE_GENOME".1.bt2l
-            echo "align to reference genome"
-	    $AL_BIN_BOWTIE2 -x "$PARAM_REFERENCE_GENOME" $PARAM_FASTQ_FILE -S "$PARAM_BAM_PREFIX"_total.sam
-	    $AL_BIN_SAMTOOLS view -bS "$PARAM_BAM_PREFIX"_total.sam > "$PARAM_BAM_PREFIX"_total.bam
-	    $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
-	    echo "detecting allelic reads"
-	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
-    	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
-	    
-	#align single-end reads to reference genome
-
-       	elif [ $AL_USE_BISMARK = 1 ]; then
-            aleaCheckDirExists "$PARAM_REFERENCE_GENOME"/Bisulfite_Genome
-            $AL_BIN_BISMARK $AL_BISMARK_ALN_PARAMS --basename "${PARAM_BAM_PREFIX##*/}"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2" -o "${PARAM_BAM_PREFIX%/*}" "$PARAM_REFERENCE_GENOME" $PARAM_FASTQ_FILE
-            
-
+            $AL_BIN_TOPHAT2 $AL_TOPHAT2_ALN_PARAMS --output-dir ./tophat_out_concat "$PARAM_GENOME" $PARAM_FASTQ_FILE
+            mv ./tophat_out_concat/accepted_hits.sam "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+            mv ./tophat_out_concat/align_summary.txt ./"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_alignSummary.txt
+            printProgress "align to reference genome"
+            aleaCheckFileExists "$PARAM_REFERENCE_GENOME".1.bt2*
+            $AL_BIN_TOPHAT2 $AL_TOPHAT2_ALN_TOTAL_PARAMS --output-dir ./tophat_out_total "$PARAM_REFERENCE_GENOME" $PARAM_FASTQ_FILE
+            mv ./tophat_out_total/accepted_hits.sam "$PARAM_BAM_PREFIX"_total.sam
+            mv ./tophat_out_total/align_summary.txt ./"$PARAM_BAM_PREFIX"_total_alignSummary.txt
+            $AL_BIN_SAMTOOLS view -bSu "$PARAM_BAM_PREFIX"_total.sam | $AL_BIN_SAMTOOLS sort - "$PARAM_BAM_PREFIX"_total
+            $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
+            printProgress "detecting allelic reads"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
+            if [ $AL_DEBUG = 0 ]; then
+                rm -r tophat_out_*
+            fi
+        
         fi
     
     else #[ $PARAM_SINGLE_READS = 0 ]
@@ -433,34 +426,39 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
 	    echo "aligning reads to concatenated insilico genome"
             alignReadsBWA_P $PARAM_FASTQ_FILE1 $PARAM_FASTQ_FILE2 $PARAM_GENOME "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"
             aleaCheckFileExists "$PARAM_REFERENCE_GENOME"
-	    echo "aligning reads to reference genome"
-    	    $AL_BIN_BWA aln "$PARAM_REFERENCE_GENOME" "$PARAM_FASTQ_FILE1" > "$PARAM_BAM_PREFIX_1".sai
-	    $AL_BIN_BWA aln "$PARAM_REFERENCE_GENOME" "$PARAM_FASTQ_FILE2" > "$PARAM_BAM_PREFIX_1".sai
-    	    $AL_BIN_BWA sampe "$PARAM_REFERENCE_GENOME" "$PARAM_BAM_PREFIX_1".sai "$PARAM_BAM_PREFIX_2".sai "$PARAM_FASTQ_FILE1" "$PARAM_FASTQ_FILE2" > "$PARAM_BAM_PREFIX"_total.sam
-	    $AL_BIN_SAMTOOLS view -bS "$PARAM_BAM_PREFIX"_total.sam > "$PARAM_BAM_PREFIX"_total.bam
-	    $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
-	    echo "detecting allelic reads"
-	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
-    	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
-	    
-	#elif [ $AL_USE_BOWTIE1 = 1 ]; then
-       #     aleaCheckFileExists "$PARAM_GENOME".1.ebwt
+            printProgress "aligning reads to reference genome"
+            $AL_BIN_BWA aln "$AL_BWA_ALN_TOTAL_PARAMS" "$PARAM_REFERENCE_GENOME" "$PARAM_FASTQ_FILE1" > "$PARAM_BAM_PREFIX_1".sai
+            $AL_BIN_BWA aln "$AL_BWA_ALN_TOTAL_PARAMS" "$PARAM_REFERENCE_GENOME" "$PARAM_FASTQ_FILE2" > "$PARAM_BAM_PREFIX_1".sai
+            $AL_BIN_BWA sampe "$PARAM_REFERENCE_GENOME" "$PARAM_BAM_PREFIX_1".sai "$PARAM_BAM_PREFIX_2".sai "$PARAM_FASTQ_FILE1" "$PARAM_FASTQ_FILE2" > "$PARAM_BAM_PREFIX"_total.sam
+            $AL_BIN_SAMTOOLS view -bSu "$PARAM_BAM_PREFIX"_total.sam | $AL_BIN_SAMTOOLS sort - "$PARAM_BAM_PREFIX"_total
+            $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
+            printProgress "detecting allelic reads"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
+        
+        #elif [ $AL_USE_BOWTIE1 = 1 ]; then
+        #    aleaCheckFileExists "$PARAM_GENOME".1.ebwt
         #    $AL_BIN_BOWTIE1 $AL_BOWTIE1_ALN_PARAMS "$PARAM_GENOME" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2 > "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
         
         elif [ $AL_USE_BOWTIE2 = 1 ]; then
             aleaCheckFileExists "$PARAM_GENOME".1.bt2l
 	    echo "align to the insilico concatenated genome"
             $AL_BIN_BOWTIE2 $AL_BOWTIE2_ALN_PARAMS -x "$PARAM_GENOME" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2 -S "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
-            aleaCheckFileExists "$PARAM_REFERENCE_GENOME".1.bt2l
-            echo "align to the reference genome"
-	    $AL_BIN_BOWTIE2 -x "$PARAM_REFERENCE_GENOME" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2 -S "$PARAM_BAM_PREFIX"_total.sam
-	    $AL_BIN_SAMTOOLS view -bS "$PARAM_BAM_PREFIX"_total.sam > "$PARAM_BAM_PREFIX"_total.bam
-	    $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
-	    echo "detecting allelic reads"
-	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
-    	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
-	    
-	elif [ $AL_USE_BISMARK = 1 ]; then
+            printProgress "align to the reference genome"
+            aleaCheckFileExists "$PARAM_REFERENCE_GENOME".1.bt2*
+            $AL_BIN_BOWTIE2 "$AL_BOWTIE2_ALN_TOTAL_PARAMS" -x "$PARAM_REFERENCE_GENOME" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2 -S "$PARAM_BAM_PREFIX"_total.sam
+            $AL_BIN_SAMTOOLS view -bSu "$PARAM_BAM_PREFIX"_total.sam | $AL_BIN_SAMTOOLS sort - "$PARAM_BAM_PREFIX"_total
+            $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
+            printProgress "detecting allelic reads"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" "== 255" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" "== 255" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
+        
+        elif [ $AL_USE_BISMARK = 1 ]; then
+            VAR_BASENAME=`basename $PARAM_BAM_PREFIX`
+            VAR_DIRNAME=`dirname $PARAM_BAM_PREFIX`
+            VAR_q=$AL_BAM2WIG_PARAM_MIN_QUALITY
+            VAR_F=$AL_BAM2WIG_PARAM_FILTERING_FLAG
+            printProgress "align to the insilico concatenated genome"
             aleaCheckDirExists "$PARAM_GENOME"/Bisulfite_Genome
             $AL_BIN_BISMARK $AL_BISMARK_ALN_PARAMS --basename "${PARAM_BAM_PREFIX##*/}"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2" -o "${PARAM_BAM_PREFIX%/*}" "$PARAM_GENOME" -1 $PARAM_FASTQ_FILE1 -2 $PARAM_FASTQ_FILE2
             mv "$PARAM_BAM_PREFIX"/"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_pe.sam "$PARAM_BAM_PREFIX"/"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
@@ -488,31 +486,24 @@ if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
 	elif [ $AL_USE_TOPHAT2 = 1 ]; then
 	    echo "align to the insilico concatenated genome"
             aleaCheckFileExists "$PARAM_GENOME".1.bt2l
-            $AL_BIN_TOPHAT2 $AL_TOPHAT2_ALN_PARAMS "$PARAM_GENOME" "$PARAM_FASTQ_FILE1" "$PARAM_FASTQ_FILE2"
-	    mv ./tophat_out/accepted_hits.sam ./"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
-	    mv ./tophat_out/align_summary.txt ./"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".txt
-	    echo "align to the reference genome"
-	    aleaCheckFileExists "$PARAM_REFERENCE_GENOME".1.bt2l
-            $AL_BIN_TOPHAT2 --no-sort-bam --no-convert-bam "$PARAM_REFERENCE_GENOME" $PARAM_FASTQ_FILE1 $PARAM_FASTQ_FILE2
-	    mv ./tophat_out/accepted_hits.sam "$PARAM_BAM_PREFIX"_total.sam
-	    mv ./tophat_out/align_summary.txt ./"$PARAM_BAM_PREFIX"_total_alignSummary.txt
-	    $AL_BIN_SAMTOOLS view -bS "$PARAM_BAM_PREFIX"_total.sam > "$PARAM_BAM_PREFIX"_total.bam
-	    $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
-	    echo "detecting allelic reads"
-	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
-    	    detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
-	    rm -r tophat_out
-	    	
-        #align paired-end reads to reference genome
-
-       	elif [ $AL_USE_BISMARK = 1 ]; then
-            aleaCheckDirExists "$PARAM_REFERENCE_GENOME"/Bisulfite_Genome
-            $AL_BIN_BISMARK $AL_BISMARK_ALN_PARAMS --basename "${PARAM_BAM_PREFIX##*/}"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2" -o "${PARAM_BAM_PREFIX%/*}" "$PARAM_REFERENCE_GENOME" $PARAM_FASTQ_FILE
-
-        fi    
-    # extract allelic reads
-    #detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
-    #detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
+            $AL_BIN_TOPHAT2 $AL_TOPHAT2_ALN_PARAMS --output-dir ./tophat_out_concat "$PARAM_GENOME" "$PARAM_FASTQ_FILE1" "$PARAM_FASTQ_FILE2"
+            mv ./tophat_out_concat/accepted_hits.sam ./"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam
+            mv ./tophat_out_concat/align_summary.txt ./"$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2"_alignSummary.txt
+            printProgress "align to the reference genome"
+            aleaCheckFileExists "$PARAM_REFERENCE_GENOME".1.bt2*
+            $AL_BIN_TOPHAT2 $AL_TOPHAT2_ALN_TOTAL_PARAMS --output-dir ./tophat_out_total "$PARAM_REFERENCE_GENOME" $PARAM_FASTQ_FILE1 $PARAM_FASTQ_FILE2
+            mv ./tophat_out_total/accepted_hits.sam "$PARAM_BAM_PREFIX"_total.sam
+            mv ./tophat_out_total/align_summary.txt ./"$PARAM_BAM_PREFIX"_total_alignSummary.txt
+            $AL_BIN_SAMTOOLS view -bSu "$PARAM_BAM_PREFIX"_total.sam | $AL_BIN_SAMTOOLS sort - "$PARAM_BAM_PREFIX"_total
+            $AL_BIN_SAMTOOLS index "$PARAM_BAM_PREFIX"_total.bam
+            printProgress "detecting allelic reads"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN1" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"
+            detectAllelicConcatenated "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1"_"$PARAM_STRAIN2".sam "$PARAM_STRAIN2" "$PARAM_GENOME" ">= 1" "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2"
+            if [ $AL_DEBUG = 0 ]; then
+                rm -r tophat_out_*
+            fi
+        
+        fi
     fi
 fi
 
