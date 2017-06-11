@@ -253,15 +253,15 @@ function createRefStrRefmap {
         fi
     fi
     
-    createFastaIndex "$VAR_FASTA1" "$PARAM_STRAIN1" "$PARAM_OUTPUT_DIR"
-    createFastaIndex "$VAR_FASTA2" "$PARAM_STRAIN2" "$PARAM_OUTPUT_DIR"
-
     if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
         VAR_FASTA_CONCAT="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1"_"$PARAM_STRAIN2".fasta
         concatFasta "$VAR_FASTA1" "$VAR_FASTA2" "$PARAM_STRAIN1" "$PARAM_STRAIN2" "$VAR_FASTA_CONCAT"
         
         $AL_BIN_SAMTOOLS faidx "$VAR_FASTA_CONCAT"
         createFastaIndex "$VAR_FASTA_CONCAT" "$PARAM_STRAIN1"_"$PARAM_STRAIN2" "$PARAM_OUTPUT_DIR"
+    else
+        createFastaIndex "$VAR_FASTA1" "$PARAM_STRAIN1" "$PARAM_OUTPUT_DIR"
+        createFastaIndex "$VAR_FASTA2" "$PARAM_STRAIN2" "$PARAM_OUTPUT_DIR"
     fi
     
     printProgress "[createGenome] Done"
