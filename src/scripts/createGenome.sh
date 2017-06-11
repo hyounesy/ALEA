@@ -140,11 +140,11 @@ function createRefStrRefmap {
         fi
         
         if [ $PARAM_STRAIN1 = $VAR_REFERENCE_STRAIN ]; then
-            # copy the reference genome as the reference stain name
+            # copy reference genome as reference stain name
             VAR_FASTA1="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1".fasta
             cp "$PARAM_INPUT_FASTA" "$VAR_FASTA1"
             cp "$PARAM_INPUT_FASTA".fai "$VAR_FASTA1".fai
-            # create a refmap file for the reference strain
+            # create a refmap file for reference strain
             createRefStrRefmap "$VAR_FASTA1".fai "$VAR_FASTA1".refmap
         else
             VAR_GENOME1_SNPS="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1".snps.fasta
@@ -170,11 +170,11 @@ function createRefStrRefmap {
         fi
         
         if [ $PARAM_STRAIN2 = $VAR_REFERENCE_STRAIN ]; then
-            # copy the reference genome as the reference stain name
+            # copy reference genome as reference stain name
             VAR_FASTA2="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN2".fasta
             cp "$PARAM_INPUT_FASTA" "$VAR_FASTA2"
             cp "$PARAM_INPUT_FASTA".fai "$VAR_FASTA2".fai
-            # create a refmap file for the reference strain
+            # create a refmap file for reference strain
             createRefStrRefmap "$VAR_FASTA2".fai "$VAR_FASTA2".refmap
         else
             VAR_GENOME2_SNPS="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN2".snps.fasta
@@ -219,11 +219,11 @@ function createRefStrRefmap {
         fi
         
         if [ $PARAM_STRAIN1 = $VAR_REFERENCE_STRAIN ]; then
-            # copy the reference genome as the reference stain name
+            # copy reference genome as reference stain name
             VAR_FASTA1="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1".fasta
             cp "$PARAM_INPUT_FASTA" "$VAR_FASTA1"
             cp "$PARAM_INPUT_FASTA".fai "$VAR_FASTA1".fai
-            # create a refmap file for the reference strain
+            # create a refmap file for reference strain
             createRefStrRefmap "$VAR_FASTA1".fai "$VAR_FASTA1".refmap
         else
             VAR_FASTA1="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1".fasta
@@ -236,7 +236,7 @@ function createRefStrRefmap {
         fi
         
         if [ $PARAM_STRAIN2 = $VAR_REFERENCE_STRAIN ]; then
-            # copy the reference genome as the reference stain name
+            # copy reference genome as reference stain name
             VAR_FASTA2="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN2".fasta
             cp "$PARAM_INPUT_FASTA" "$VAR_FASTA2"
             cp "$PARAM_INPUT_FASTA".fai "$VAR_FASTA2".fai
