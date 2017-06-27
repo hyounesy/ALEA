@@ -20,20 +20,18 @@ sequencing data (ChIP-seq, RNA-seq, etc.) that takes the raw sequencing data and
   * [Using SHAPEIT2](#using-shapeit2-for-genotype-phasing)
   * [Credits](#credits)
   
-##	Quick Reference
-###Dependencies
+## Quick Reference
+### Dependencies
 ALEA runs from command line and requires a UNIX based operating system. You also need to install an appropriate version of the following dependencies:
 
 Java (1.6 +), Python (2.4 +), bwa (0.7 +) and/or bowtie (1.0.0 or 2.0.9), samtools (0.1.18 +), tabix (0.2.5 +), bgzip, bedGraphToBigWig, SHAPEIT2, VCFtools (0.1.10 +), Plink (1.07 +). 
 
-
-###Pipeline
-
+### Pipeline
 The following figure shows the allele-specific analysis pipeline in ALEA.
 
 ![ALEA Pipeline](doc/alea-diagram.png)
 
-###Synopsis
+### Synopsis
 
 ``` bash
 alea phaseVCF hapsDIR unphased.vcf outputDIR
@@ -55,10 +53,10 @@ alea createTracks <-s/-p> bamPrefix strain1 strain2 genome1.refmap genome2.refma
 * test data: ftp://ftp.bcgsc.ca/supplementary/ALEA/files/test-data/
 * genome browser tracks:ftp://ftp.bcgsc.ca/supplementary/ALEA/files/tracks/
 
-####Hardware requirements
+#### Hardware requirements
 It is recommended to run ALEA on a 64-bit UNIX based machine with a minimum of 4GB available RAM and 60 GB available disk space (to process both human and mouse test-data).
 
-####Software dependencies
+#### Software dependencies
 
 ALEA runs from command line and requires a UNIX based operating system as well as a working version of Java (version 1.6 or higher) and Python (version 2.4 or higher). Further more, the following software needs to be installed:  
 
@@ -85,7 +83,7 @@ ALEA runs from command line and requires a UNIX based operating system as well a
 It is recommended to have all the required dependencies, however different modules use only certain external tools. For example to work with the mouse data, you won’t need the phasing module (pipeline figure: a) as phased vcf files are alredy provided. Thus SHAPEIT, vcftools, tabix and Plink won’t be necessary.
 
 
-####Download
+#### Download
 
 To start, download the latest [distribution package](https://github.com/hyounesy/ALEA/raw/master/alea.1.2.2.tar.gz) and extract using: 
 
@@ -97,7 +95,7 @@ The contents will be extracted into a directory named alea which will be referre
 Once done, you may run  ```<alea>/download_human_data.sh``` and/or ```<alea>/download_mouse_data.sh``` scripts to get the  human or mouse (or both) test datasets. These scripts download all the required input data resources you need to run the allele-specific analysis explained in the [Examples](#examples-1) section. For each test data you will need 30GB of storage space for the raw input and processed output data  (i.e. 60GB for both mouse and human).
 You may also (optionally) download the individual test data from the data directory (ftp://ftp.bcgsc.ca/supplementary/ALEA/files/test-data/)
 
-####Setting the options
+#### Setting the options
 Options such as the allelic alignment method (using concatenated vs. separate genome), aligner tool (BWA or Bowtie) and parameters passed to external tools can be modified in the ```<alea>/bin/alea.config```. The most important options are:
 
 * ```AL_USE_CONCATENATED_GENOME```: Enables use of concatenated genome method (default:```=1```) or the separate genome method (```=0```)
@@ -107,7 +105,7 @@ Options such as the allelic alignment method (using concatenated vs. separate ge
 * ```AL_DEBUG```: Sets debug mode. When enabled (=1) the tool will print all the executed commands, and won't remove temporary files.
 
 
-####Setting the paths
+#### Setting the paths
 
 You can set up the paths to the required tools in either of the following ways:
 
@@ -144,7 +142,7 @@ All required files can be downloaded from the data repository(ftp://ftp.bcgsc.ca
 A similar approach was also applied to a recently published dataset for mouse trophoblast cells [Calabrese et al., 2012], including RNA-seq and H3K36me3 ChIP-seq data derived from crosses between CAST/EiJ (Cast) and C57BL/6J (B6) mice. The original data is available for download under the GEO accession numbers [GSM967646](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM967646) and [GSM967642](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM967642). Variant sequence data was obtained from the [Sanger Institute](http://www.sanger.ac.uk/science/data/mouse-genomes-project) (accessed 2/15/2016).
 All required data can be downloaded from (ftp://ftp.bcgsc.ca/supplementary/ALEA/files/test-data/mouse/) or automatically using the script ```<alea>/download_mouse_data.sh``` (Note: requires wget).  RNA-seq data are not downloaded automatically by the download scripts but may be downloaded manually using the provided GEO accession numbers.
 
-####Tracks
+#### Tracks
 The ALEA commands used to generate final haplotype-specific tracks for the human and mouse dataset are explained in more details later in [Examples](#examples-1).
 The final bigWig files (.bw) of haplotype-specific H3K36me3, RNA-seq and variant tracks for human and mouse as well as the textual .track files can be downloaded from (ftp://ftp.bcgsc.ca/supplementary/ALEA/files/tracks) and used directly in UCSC genome browser to check the regions of interest. Click on the following figures to navigate to the corresponding genome browser session:
 
@@ -158,33 +156,33 @@ As we expected, H3K36me3 enriches the gene body of active genes and correlates w
 
 ALEA consists of the following four modules for which the processes, the input and output files and their formats are shown in Figure 1.
 
-###Genotype phasing
+### Genotype phasing
 For human samples, genotypes are typically called from whole genome-sequencing (WGS) short reads accompanying the epigenomic dataset under AS study. SHAPEIT2 is then employed to phase genotypes in using the publicly available reference panel of haplotypes, provided by the 1000 Genomes project  ([Using SHAPEIT2](#using-shapeit2-for-genotype-phasing) explains the details of running SHAPEIT2 using reference panel of haplotypes). We then use the output of SHAPEIT2, i.e. phased haplotypes (.haps), together with the original unphased variant file (VCF) to create a phased variant file with two haplotypes containing homozygous and phased heterozygous SNPs and Indels (pipeline figure a).
 
 For mouse datasets, ALEA accepts epigenomic marks from F1 hybrid offspring whose parents are among the 17 inbred strains available from the Mouse Genome Project. Therefore, the phased variant file is already available and we do not need the phasing step.  The phased SNPs and Indels files are downloaded and placed under ```<alea>/test-data/mouse``` using the ```<alea>download_mouse_data.sh``` script.
 
 The bellow commands are only required on human samples.
 
-#####Usage
+##### Usage
 ```alea phaseVCF hapsDIR unphased.vcf outputPrefix```
 
-#####Options
+##### Options
 
 * ```hapsDIR```:        		path to the directory containing the .haps files
 * ```unphased.vcf```:   		path to the vcf file containing unphased SNPs and Indels
 * ```outputPrefix```:		output file prefix including the path but not the extension
 
-#####Output
+##### Output
 Creates the file ```outputPrefix.vcf.gz```
 
-###Insilico genome creation
+### Insilico genome creation
 The output of the phasing module, the phased variant file, together with the reference genome is
 fed into the second module (pipeline figure b) in which haplotype regions are reconstructed from the individual haplotypes. Two insilico genomes are created to be used for the optimal identification of chromosomal or allele specific effects. For mouse, the two insilico genomes represent the parental haplotypes, however for human the two genomes will essentially be a mosaic of the parental haplotypes due to the unlikeliness of true long-range phasing. In addition to the two insilico genomes, this module also concatenates these parental genomes for each chromosome and makes an artificial genome which is twice the size of the parental genomes. This new genome is used later for finding haplotype-specific epigenomic reads.
 
 One can run the bellow command for both human and mouse. The name of strains can be found from the ```phased.vcf.gz``` file. For human, it is always "hap1" and "hap2", which are the names that SHAPEIT2 uses for phased haplotypes. For mouse, these are the names of the parental inbred mice crossing to create F1 hybrid mouse under study (e.g. *CASTEiJ* (Cast) and *C57BL6J* (B6) mice). ALEA accepts 17 mouse strain names from the following:
 *C57BL6J , 129S1 , AJ , AKR , BALBcJ  , C3HHeJ , C57BL6NJ , CASTEiJ , CBAJ , DBA2J , FVB_NJ , LPJ , NODShiLtJ , NZO , PWKPhJ , Spretus , WSBEiJ*
 
-#####Usage
+##### Usage
  * When all SNPs and Indels are in a single vcf file:
 
   ```
@@ -201,7 +199,7 @@ One can run the bellow command for both human and mouse. The name of strains can
          strain1 strain2 outputDir
   ```
 
-#####Options
+##### Options
 
 * ```reference.fasta``` the reference genome fasta file
 * ```phased.vcf.gz``` the phased variants vcf file (including SNPs and Indels)
@@ -212,19 +210,19 @@ One can run the bellow command for both human and mouse. The name of strains can
 * ```phased-snps.vcf.gz``` the phased SNPs (should be specified first)
 * ```phased-indels.vcf.gz``` the phased Indels  (should be specified second)
 
-#####Output
+##### Output
 Creates two parental in-silico genomes strain1.fasta and strain2.fasta as well as alignment indices.
  A concatenated genome strain1_strain2.fasta will be created if ```AL_USE_CONCATENATED_GENOME=1``` is set in ```alea.config```.
 
 *Note*:  It is possible to have SNPs and Indels in two separate vcf files. In that case use -snps-indels-separately option, and make sure you specify SNPs before Indels.
 
-###Allele-specific Alignment
+### Allele-specific Alignment
 
 We use BWA or Bowtie to align ChIP-seq or RNA-seq short reads in FASTQ format (BWA also supports fastq.gz and bam as input) to the insilico genomes constructed by the previous module and detect the allelic reads that are uniquely aligned to each genome (pipeline figure c). These reads map to the regions containing heterozygous SNPs and can be used to determine the allelic ratios for those regions. Consequently, all reads aligned to multiple locations of either haplotypes or aligned to both haplotypes are filtered out. Thus, the module captures the haplotype-specific reads aligned only to one of the haplotypes. Samtools is employed to convert and sort the generated SAM files to BAM format. 
 
 The bellow command can be applied on both human and mouse data. To find eligible names for human and mouse strains, refer to [Insilico genome creation](#insilico-genome-creation).
 
-#####Usage
+##### Usage
 
 * using concatenated genome method (```AL_USE_CONCATENATED_GENOME=1```):
 
@@ -234,7 +232,7 @@ The bellow command can be applied on both human and mouse data. To find eligible
 
   ```alea alignReads <-s/-p> <input_reads_1 [input_reads_2]> <genome1  genome2> <strain1 strain2> <outputPrefix>```
 
-#####Options
+##### Options
 * ```-s```              to align single-end reads (requires one input file)
 * ```-p```              to align paired-end reads (requires two input files)
          
@@ -268,7 +266,7 @@ The bellow command can be applied on both human and mouse data. To find eligible
 * ```outputPrefix```    prefix for output files, including the full path, without an extension
                     (e.g. ```./TSC_H3K36me3``` )
 
-#####Output
+##### Output
 
 * ```outputPrefix_strain1_starin2.sam``` (when ```AL_USE_CONCATENATED_GENOME=1```) all reads aligned to the concatenated insilico genome                                       
 * ```outputPrefix_strain1_all.sam``` (when ```AL_USE_CONCATENATED_GENOME=0```)
@@ -281,7 +279,7 @@ The bellow command can be applied on both human and mouse data. To find eligible
     
 * ```outputPrefix_strain2.bam``` allelic reads for strain2 genome (sorted bam)
 
-#####Examples
+##### Examples
 
 (when: ```AL_USE_CONCATENATED_GENOME=1, AL_USE_BWA=1```):
     
@@ -302,16 +300,16 @@ alea alignReads -s H3K36me3.fastq CASTEiJ.fasta C57BL6J.fasta CASTEiJ C57BL6J ./
 alea alignReads -s H3K36me3.fastq bowtie1-index/CASTEiJ bowtie1-index/C57BL6J CASTEiJ C57BL6J ./H3K36me3
 ```
 
-###Projecting to reference genome
+### Projecting to reference genome
 The forth module (pipeline figure d) generates two haplotype-specific track files from mapped reads and projects them back to the reference genome. Due to the existence of Indels in the construction
 of parental in-silico genomes the coordinates of the tracks are skewed once compared to the reference genome. However, most visualization tools work based on alignment to reference genomes. Using the bwa index file created with the in-silico genomes, ALEA maps the tracks back to the reference genome.
 
 The bellow command can be applied on both human and mouse data. To find eligible names for human and mouse strains, see section [insilico genome creation](#insilico-genome-creation) above.
 
-#####Usage
+##### Usage
 ```alea createTracks <options> bamPrefix strain1 strain2 genome1.refmap genome2.refmap chrom.sizes outputDIR```
 
-#####Options
+##### Options
 * ```-s``` to create tracks for the single-end aligned reads
 * ```-p``` to create tracks for the paired-end aligned reads
 * ```bamPrefix``` prefix used for the output of alignReads command
@@ -322,7 +320,7 @@ The bellow command can be applied on both human and mouse data. To find eligible
 * ```chrom.sizes``` path to the chromosome size file (required for creating .bw)
 * ```outputDIR``` output directory (where to create track files)
          
-#####Output
+##### Output
 * ```outputDIR/outputPrefix_strain1.bedGraph``` and ```outputDIR/outputPrefix_strain1.bw``` (read profiles for strain1 projected to reference genome)
 * ```outputDIR/outputPrefix_strain2.bedGraph``` and ```outputDIR/outputPrefix_strain2.bw``` (read profiles for strain2 projected to reference genome)
 * ```outputDIR/outputPrefix_strain1.wig.gz``` and ```outputDIR/outputPrefix_strain2.wig.gz``` unprojected read profiles for strain1 and strain2
@@ -373,7 +371,7 @@ bin/alea alignReads -s \
          hap1 hap2 test-data/human/H3K36me3
 ```
 
-#####Projecting to reference genome
+##### Projecting to reference genome
 ``` bash
 bin/alea createTracks -s \
          test-data/human/H3K36me3 hap1 hap2 \
@@ -498,5 +496,5 @@ To run SHAPEIT2 on reference panel of haplotypes, provided by the 1000 Genomes p
   --no-mcmc --thread 8
 ```
 
-##Credits
+## Credits
 Hamid Younesy, Torsten Möller, Alireza Heravi-Moussavi, Jeffrey B. Cheng, Joseph F. Costello, Matthew C. Lorincz, Mohammad M. Karimi and Steven J. M. Jones, "ALEA: a toolbox for allele-specific epigenomics analysis." Bioinformatics 30.8 (2014): 1172-1174. [[link to paper](http://bioinformatics.oxfordjournals.org/content/30/8/1172.long)]
