@@ -256,7 +256,7 @@ function detectAllelicConcatenated {
     $AL_BIN_SAMTOOLS view -bt $PARAM_REFFASTA "$PARAM_OUT_PREFIX".sam > "$PARAM_OUT_PREFIX".unsorted.bam
     
     # sort by coordinates
-    $AL_BIN_SAMTOOLS sort "$PARAM_OUT_PREFIX".unsorted.bam "$PARAM_OUT_PREFIX" 
+    $AL_BIN_SAMTOOLS sort "$PARAM_OUT_PREFIX".unsorted.bam -T "$PARAM_OUT_PREFIX" 
     
     if [ -f "$PARAM_OUT_PREFIX".bam ]
     then
@@ -301,8 +301,8 @@ function detectAllelicSeparate {
     samtools view -bS "$PARAM_OUT_PREFIX2".unsorted.sam > "$PARAM_OUT_PREFIX2".unsorted.bam
     
     # sort .bam
-    samtools sort "$PARAM_OUT_PREFIX1".unsorted.bam "$PARAM_OUT_PREFIX1"
-    samtools sort "$PARAM_OUT_PREFIX2".unsorted.bam "$PARAM_OUT_PREFIX2"
+    samtools sort "$PARAM_OUT_PREFIX1".unsorted.bam -T "$PARAM_OUT_PREFIX1"
+    samtools sort "$PARAM_OUT_PREFIX2".unsorted.bam -T "$PARAM_OUT_PREFIX2"
     
     # remove temp files
     if [ $AL_DEBUG = 0 ]; then
