@@ -4,7 +4,8 @@ pushd `dirname $0` > /dev/null
 AL_DIR_TOOLS=`pwd -P` # get the full path to itself
 popd > /dev/null
 
-source $AL_DIR_TOOLS/alea.config
+#source $AL_DIR_TOOLS/alea.config
+source /alea-data/alea.config
 
 ##############################################################################
 #############   Module 2: creating insilico genome
