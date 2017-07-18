@@ -3,7 +3,8 @@ AL_DIR=`pwd -P` # get the full path to itself
 popd > /dev/null
 AL_DIR_TOOLS="$AL_DIR"/bin
 
-source "$AL_DIR_TOOLS"/alea.config
+#source $AL_DIR_TOOLS/alea.config
+source /alea-data/alea.config
 
 
 mkdir -p "$AL_DIR"/test-data/mouse
