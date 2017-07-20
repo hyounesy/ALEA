@@ -4,8 +4,8 @@ pushd `dirname $0` > /dev/null
 AL_DIR_TOOLS=`pwd -P` # get the full path to itself
 popd > /dev/null
 
-#source $AL_DIR_TOOLS/alea.config
-source /alea-data/alea.config
+source $AL_DIR_TOOLS/alea.config
+
 
 ##############################################################################
 #############   Module 0: interactive setting
@@ -202,7 +202,8 @@ function modifyConfig {
     
     if [ $AL_DEBUG = 0 ]
     then
-        mv $AL_DIR_TOOLS/.alea.config.tmp $AL_DIR_TOOLS/alea.config
+        #mv $AL_DIR_TOOLS/.alea.config.tmp $AL_DIR_TOOLS/alea.config
+        mv $AL_DIR_TOOLS/.alea.config.tmp /alea-data/alea.config
     else
         cp $AL_DIR_TOOLS/.alea.config.tmp $AL_DIR_TOOLS/alea.config
         mv $AL_DIR_TOOLS/.alea.config.tmp $AL_DIR_TOOLS/.alea.config.tmp2
