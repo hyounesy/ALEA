@@ -30,7 +30,7 @@ AL_ALIGNER_CHOICE_RNA='
 
 AL_ALIGNER_TYPE_RNA=1
 
-# In the case of RNA-seq
+# In the case of WGBS
 AL_ALIGNER_CHOICE_BS='
 [1] Bismark'
 
@@ -40,8 +40,9 @@ AL_ALIGNER_TYPE_BS=1
 # method type
 #--------------------------------------------------------------------
 
-AL_METHOD_CHOICE='
-[1] Concatenated genome method
-[2] Separate genome method'
+# do not allow separate genome method
+#AL_METHOD_CHOICE='
+#[1] Concatenated genome method
+#[2] Separate genome method'
 
 AL_METHOD_TYPE=1
