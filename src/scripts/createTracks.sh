@@ -4,15 +4,15 @@ pushd `dirname $0` > /dev/null
 AL_DIR_TOOLS=`pwd -P` # get the full path to itself
 popd > /dev/null
 
-#source $AL_DIR_TOOLS/alea.config
-source /alea-data/alea.config
+source $AL_DIR_TOOLS/alea.config
+#source /alea-data/alea.config
 
 
-if test $# -ne 8
+if test $# -ne 7
 then
     echo "
 Usage:   
-         alea createTracks <-s/-p> bamPrefix strain1 strain2 genome1.refmap genome2.refmap chrom.sizes outputDIR
+         alea createTracks <-s/-p> bamPrefix strain1 strain2 genome1.refmap genome2.refmap outputDIR
          
 Options:
          -s to create tracks for the single-end aligned reads
@@ -23,14 +23,13 @@ Options:
          strain2        name of strain2 (e.g. hap2)
          genome1.refmap path to the refmap file created for insilico genome 1
          genome1.refmap path to the refmap file created for insilico genome 2
-         chrom.sizes    path to the chromosome size file (required for creating .bw)
          outputDIR      output directory (where to create track files)
          
 Output:
          outputDIR/outputPrefix_strain1.bedGraph
          outputDIR/outputPrefix_strain1.bw        read profiles for strain1 projected to reference genome
          
-         outputDIR/outputPrefix_strain2.bedGraph 
+         outputDIR/outputPrefix_strain2.bedGraph
          outputDIR/outputPrefix_strain2.bw        read profiles for strain2 projected to reference genome
          
          outputDIR/outputPrefix_strain1.wig.gz
@@ -47,7 +46,7 @@ fi
 function BAM2WIGbedtools {
     local PARAM_INPUT_PREFIX=$1
     local PARAM_OUTPUT_DIR=$2
-    local PARAM_CHROM_SIZES=$3
+    local PARAM_CHROM_SIZES=$AL_REFERENCE_CHROM_SIZES
     
     local VAR_q=$AL_BAM2WIG_PARAM_MIN_QUALITY     # min read quality [0]
     local VAR_F=$AL_BAM2WIG_PARAM_FILTERING_FLAG  # filtering flag [0]
@@ -55,6 +54,7 @@ function BAM2WIGbedtools {
     local VAR_INPUT_BASENAME=`basename $PARAM_INPUT_PREFIX`
     
     aleaCheckFileExists "$PARAM_INPUT_PREFIX".bam
+    printProgress "[bam2wig of $VAR_INPUT_BASENAME] started"
     $AL_BIN_SAMTOOLS view -bh -F "$VAR_F" -q "$VAR_q" "$PARAM_INPUT_PREFIX".bam > "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bam
     
     if [ "$VAR_OPTION" = "-s" ]; then
@@ -70,7 +70,8 @@ function BAM2WIGbedtools {
         fi
     elif [ "$VAR_OPTION" = "-p" ]; then
         if [ $AL_USE_BWA = 1 ] || [ $AL_USE_BOWTIE1 = 1 ] || [ $AL_USE_BOWTIE2 = 1 ]; then
-            $AL_BIN_BEDTOOLS genomecov -bg -pc -ibam "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bam -g "$PARAM_CHROM_SIZES" \
+	#removed -pc flag as it produced an empty bedgraph (bedtools v2.26.0, JRA)
+            $AL_BIN_BEDTOOLS genomecov -bg -ibam "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bam -g "$PARAM_CHROM_SIZES" \
                 > "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q"_unsorted.bedGraph
         elif [ $AL_USE_BISMARK = 1 ]; then
             $AL_BIN_BEDTOOLS genomecov -bg -ibam "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".bam -g "$PARAM_CHROM_SIZES" \
@@ -104,56 +105,6 @@ function BAM2WIGbedtools {
         mv "$PARAM_INPUT_PREFIX"_F"$VAR_F"_q"$VAR_q".wig "$PARAM_OUTPUT_DIR"/"$VAR_INPUT_BASENAME".wig
     fi
 }
-
-### Converts filtered bam files to wig
-#function convertBam2WigSE {
-#    local PARAM_INPUT_PREFIX=$1
-#    local PARAM_OUTPUT_DIR=$2
-#    
-#    local VAR_q=$AL_BAM2WIG_PARAM_MIN_QUALITY     # min read quality [0]
-#    local VAR_F=$AL_BAM2WIG_PARAM_FILTERING_FLAG  # filtering flag [0]
-#    local VAR_x=$AL_BAM2WIG_PARAM_SE_EXTENSION    # average fragment length used for fixed length of the read extension [0]. used for ChIP-seq (SET) only
-#    local VAR_INPUT_BASENAME=`basename $PARAM_INPUT_PREFIX`
-#    
-#    aleaCheckFileExists "$PARAM_INPUT_PREFIX".bam
-#    
-#    # Create a wig profile from the bam file
-#    $AL_BIN_BAM2WIG \
-#        -samtools $AL_BIN_SAMTOOLS \
-#        -bamFile "$PARAM_INPUT_PREFIX".bam \
-#        -out $PARAM_OUTPUT_DIR/ \
-#        -q $VAR_q \
-#        -F $VAR_F \
-#        -cs \
-#        -x $VAR_x
-#    
-#    mv $PARAM_OUTPUT_DIR/$VAR_INPUT_BASENAME.q"$VAR_q".F"$VAR_F".SET_"$VAR_x".wig.gz $PARAM_OUTPUT_DIR/$VAR_INPUT_BASENAME.wig.gz
-#}
-#
-#function convertBam2WigPE {
-#    local PARAM_INPUT_PREFIX=$1
-#    local PARAM_OUTPUT_DIR=$2
-#    
-#    local VAR_q=$AL_BAM2WIG_PARAM_MIN_QUALITY     # min read quality [0]
-#    local VAR_F=$AL_BAM2WIG_PARAM_FILTERING_FLAG  # filtering flag [0]
-#    local VAR_x=$AL_BAM2WIG_PARAM_SE_EXTENSION    # average fragment length used for fixed length of the read extension [0]. used for ChIP-seq (SET) only
-#    local VAR_INPUT_BASENAME=`basename $PARAM_INPUT_PREFIX`
-#    
-#    aleaCheckFileExists "$PARAM_INPUT_PREFIX".bam
-#    
-#    # Create a wig profile from the bam file
-#    $AL_BIN_BAM2WIG \
-#        -samtools $AL_BIN_SAMTOOLS \
-#        -bamFile "$PARAM_INPUT_PREFIX".bam \
-#        -out $PARAM_OUTPUT_DIR/ \
-#        -q $VAR_q \
-#        -F $VAR_F \
-#        -cp \
-#        -x $VAR_x
-#    
-#    mv "$PARAM_OUTPUT_DIR"/"$VAR_INPUT_BASENAME".q"$VAR_q".F"$VAR_F".PET.wig.gz "$PARAM_OUTPUT_DIR"/"$VAR_INPUT_BASENAME".wig.gz
-#}
-
 
 ### projects a wig profile to reference genome
 function projectToReferenceGenome {
@@ -227,6 +178,13 @@ function mergeTwoStrandMethylation {
     printProgress "Finished mergeTwoStrandMethylation"
 }
 
+function methyl2LOC {
+    local INPUT=$1
+    grep -v "track" $INPUT | awk '{OFS="\t";FS="\t"} {print $1, $2, $3, "1"}' > ${INPUT//.bedGraph/_LOC.bedGraph}
+    $AL_BIN_BEDGRAPH_TO_BW ${INPUT//.bedGraph/_LOC.bedGraph} "$PARAM_CHROM_SIZES" ${INPUT//.bedGraph/_LOC.bw}
+    rm ${INPUT//.bedGraph/_LOC.bedGraph}
+}
+
 ### convert a CpG site report into a Wig
 function convertMethylationToWig {
     local PARAM_SITE_REPORT_FILE=$1
@@ -297,9 +255,8 @@ shift
     PARAM_STRAIN2=$3
     PARAM_REFMAP_FILE1=$4
     PARAM_REFMAP_FILE2=$5
-    PARAM_CHROM_SIZES=$6
-    PARAM_OUTPUT_DIR=$7
-    PARAM_OUTPUT_DIR=$7
+    PARAM_CHROM_SIZES=$AL_REFERENCE_CHROM_SIZES
+    PARAM_OUTPUT_DIR=$6
     
     aleaCheckFileExists "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN1".bam
     aleaCheckFileExists "$PARAM_BAM_PREFIX"_"$PARAM_STRAIN2".bam
@@ -332,8 +289,76 @@ shift
     $AL_BIN_BEDGRAPH_TO_BW "$VAR_OUTPUT_PREFIX2".bedGraph "$PARAM_CHROM_SIZES" "$VAR_OUTPUT_PREFIX2".bw
     
     BAM2WIGbedtools "$PARAM_BAM_PREFIX"_total "$PARAM_OUTPUT_DIR" "$PARAM_CHROM_SIZES"
-
+    printProgress "[bam2wig] finished successfully"
 #}
+
+
+    if [ $AL_USE_BISMARK = 1 ]; then
+        :
+    else
+
+### generate normalized bigwigs
+### and place them in UCSC track hub
+#function TrackHubGenerate {
+#    VAR_OUTPUT_BASENAME=`basename $PARAM_BAM_PREFIX`
+#    VAR_OUTPUT_PREFIX1="$PARAM_OUTPUT_DIR"/"$VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1"
+#    VAR_OUTPUT_PREFIX2="$PARAM_OUTPUT_DIR"/"$VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2"
+
+        VAR_q=$AL_BAM2WIG_PARAM_MIN_QUALITY     # min read quality [0]
+        VAR_F=$AL_BAM2WIG_PARAM_FILTERING_FLAG  # filtering flag [0]
+        VAR_OUTPUT_TOTAL="$PARAM_OUTPUT_DIR"/"$VAR_OUTPUT_BASENAME"_total_F"$VAR_F"_q"$VAR_q"
+        printProgress "[TrackHub Generate] started"
+
+        aleaCreateDir "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"
+        touch "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/trackDb.txt "$PARAM_OUTPUT_DIR"/Track_Hub/hub.txt "$PARAM_OUTPUT_DIR"/Track_Hub/genomes.txt
+
+        RPM_SCALING_FACTOR_tmp=$($AL_BIN_SAMTOOLS view -c "$PARAM_BAM_PREFIX"_total_F"$VAR_F"_q"$VAR_q".bam)
+        RPM_SCALING_FACTOR=$(echo "scale=25;1000000/$RPM_SCALING_FACTOR_tmp" | bc)
+        echo "scaling factor: $RPM_SCALING_FACTOR"
+
+        #ref
+        awk -F "\t" -v RPM_SCALE="$RPM_SCALING_FACTOR" 'BEGIN {OFS="\t"; print $0} {
+            $4 *= RPM_SCALE
+            print $0;}' "$VAR_OUTPUT_PREFIX1".bedGraph > "$VAR_OUTPUT_PREFIX1"_tmp1.bedGraph
+        grep -v "type" "$VAR_OUTPUT_PREFIX1"_tmp1.bedGraph > "$VAR_OUTPUT_PREFIX1"_tmp2.bedGraph
+        sort -k1,1 -k2,2n "$VAR_OUTPUT_PREFIX1"_tmp2.bedGraph > "$VAR_OUTPUT_PREFIX1"_tmp3.bedGraph
+        $AL_BIN_BEDGRAPH_TO_BW "$VAR_OUTPUT_PREFIX1"_tmp3.bedGraph "$PARAM_CHROM_SIZES" "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/"$VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1"_RPM.bw
+        rm "$VAR_OUTPUT_PREFIX1"_tmp1.bedGraph "$VAR_OUTPUT_PREFIX1"_tmp2.bedGraph "$VAR_OUTPUT_PREFIX1"_tmp3.bedGraph
+        #alt
+        awk -F "\t" -v RPM_SCALE="$RPM_SCALING_FACTOR" 'BEGIN {OFS="\t"; print $0} {
+            $4 *= RPM_SCALE
+            print $0;}' "$VAR_OUTPUT_PREFIX2".bedGraph > "$VAR_OUTPUT_PREFIX2"_tmp1.bedGraph
+        grep -v "type" "$VAR_OUTPUT_PREFIX2"_tmp1.bedGraph > "$VAR_OUTPUT_PREFIX2"_tmp2.bedGraph
+        sort -k1,1 -k2,2n "$VAR_OUTPUT_PREFIX2"_tmp2.bedGraph > "$VAR_OUTPUT_PREFIX2"_tmp3.bedGraph
+        $AL_BIN_BEDGRAPH_TO_BW "$VAR_OUTPUT_PREFIX2"_tmp3.bedGraph "$PARAM_CHROM_SIZES" "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/"$VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2"_RPM.bw
+        rm "$VAR_OUTPUT_PREFIX2"_tmp1.bedGraph "$VAR_OUTPUT_PREFIX2"_tmp2.bedGraph "$VAR_OUTPUT_PREFIX2"_tmp3.bedGraph
+        #total
+        mv "$PARAM_OUTPUT_DIR"/"$VAR_OUTPUT_BASENAME"_total.bedGraph "$VAR_OUTPUT_TOTAL".bedGraph
+        awk -F "\t" -v RPM_SCALE="$RPM_SCALING_FACTOR" 'BEGIN {OFS="\t"; print $0} {
+            $4 *= RPM_SCALE
+        print $0;}' "$VAR_OUTPUT_TOTAL".bedGraph > "$VAR_OUTPUT_TOTAL"_RPM.bedGraph
+        $AL_BIN_BEDGRAPH_TO_BW "$VAR_OUTPUT_TOTAL"_RPM.bedGraph "$PARAM_CHROM_SIZES" "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/"$VAR_OUTPUT_BASENAME"_total_F"$VAR_F"_q"$VAR_q"_RPM.bw
+
+        ### code adapted from Aaron Bogutz, Louis Lefebvre lab (UBC)
+        printf "genome "$AL_BUILD"\ntrackDb "$AL_BUILD"/trackDb.txt" > "$PARAM_OUTPUT_DIR"/Track_Hub/genomes.txt
+        printf "hub <name>\nshortLabel <short name>\nlongLabel <Hub to display data at UCSC>\ngenomesFile genomes.txt\nemail <email>" > "$PARAM_OUTPUT_DIR"/Track_Hub/hub.txt
+        printf "track %s\ncontainer multiWig\nshortLabel %s\nlongLabel %s\ntype bigWig\nvisibility full\nmaxHeightPixels 150:60:32\nconfigurable on\nautoScale on\naggregate transparentOverlay\nshowSubtrackColorOnUi on\npriority 1.0\n\n" $VAR_OUTPUT_BASENAME $VAR_OUTPUT_BASENAME $VAR_OUTPUT_BASENAME | tee -a "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/trackDb.txt
+        printf "\ttrack %s\n\tparent %s\n\tshortLabel %s\n\tlongLabel %s\n\ttype bigWig\n\tbigDataUrl %s\n\tcolor 215,215,215\n\taltColor 225,225,225\n\tautoScale on\n\n" $VAR_OUTPUT_BASENAME"_total" $VAR_OUTPUT_BASENAME $VAR_OUTPUT_BASENAME"_total" $VAR_OUTPUT_BASENAME"_total" $VAR_OUTPUT_BASENAME"_total.bw" | tee -a "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/trackDb.txt
+        printf "\ttrack %s\n\tparent %s\n\tshortLabel %s\n\tlongLabel %s\n\ttype bigWig\n\tbigDataUrl %s\n\tcolor 215,215,215\n\taltColor 225,225,225\n\tautoScale on\n\n" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1 $VAR_OUTPUT_BASENAME $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1 $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1 $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1".bw" | tee -a "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/trackDb.txt
+        printf "\ttrack %s\n\tparent %s\n\tshortLabel %s\n\tlongLabel %s\n\ttype bigWig\n\tbigDataUrl %s\n\tcolor 215,215,215\n\taltColor 225,225,225\n\tautoScale on\n\n" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2 $VAR_OUTPUT_BASENAME $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2 $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2 $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2".bw" | tee -a "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/trackDb.txt
+        $AL_BIN_HUBCHECK -noTracks "$PARAM_OUTPUT_DIR"/Track_Hub/hub.txt
+
+        printProgress "[TrackHub generate] finished successfully"
+    #    if [ $AL_DEBUG == 0 ]; then
+    #        rm "$PARAM_OUTPUT_DIR"/*preProject*
+    #        rm "$PARAM_OUTPUT_DIR"/*total.wig.gz
+    #    fi
+#}
+    fi
+
+
+
+
 
 if [ $AL_USE_BISMARK = 1 ]; then
 #function generateAllelicMethylTracks {
@@ -376,6 +401,40 @@ if [ $AL_USE_BISMARK = 1 ]; then
     mergeTwoStrandMethylation "$VAR_OUTPUT_PREFIX_TOTAL".CpG_report.txt "$VAR_OUTPUT_PREFIX_TOTAL".CpG_site_report.txt
     convertMethylationToBedgraph "$VAR_OUTPUT_PREFIX_TOTAL".CpG_site_report.txt "$VAR_OUTPUT_PREFIX_TOTAL"_methyl.bedGraph
     $AL_BIN_BEDGRAPH_TO_BW "$VAR_OUTPUT_PREFIX_TOTAL"_methyl.bedGraph "$PARAM_CHROM_SIZES" "$VAR_OUTPUT_PREFIX_TOTAL"_methyl.bw
+
+    methyl2LOC "$VAR_OUTPUT_PREFIX1"_methyl.bedGraph
+    methyl2LOC "$VAR_OUTPUT_PREFIX2"_methyl.bedGraph
+    methyl2LOC "$VAR_OUTPUT_PREFIX_TOTAL"_methyl.bedGraph
+
+    aleaCreateDir "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"
+    touch "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/trackDb.txt "$PARAM_OUTPUT_DIR"/Track_Hub/hub.txt "$PARAM_OUTPUT_DIR"/Track_Hub/genomes.txt
+
+    cp "$VAR_OUTPUT_PREFIX1"_methyl_LOC.bw "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/"$VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1"_methyl_LOC.bw
+    cp "$VAR_OUTPUT_PREFIX2"_methyl_LOC.bw "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/"$VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2"_methyl_LOC.bw
+    cp "$VAR_OUTPUT_PREFIX_TOTAL"_methyl_LOC.bw "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/"$VAR_OUTPUT_BASENAME"_total_methyl_LOC.bw
+
+    cp "$VAR_OUTPUT_PREFIX1"_methyl.bw "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/"$VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1"_methyl.bw
+    cp "$VAR_OUTPUT_PREFIX2"_methyl.bw "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/"$VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2"_methyl.bw
+    cp "$VAR_OUTPUT_PREFIX_TOTAL"_methyl.bw "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/"$VAR_OUTPUT_BASENAME"_total_methyl.bw
+
+
+
+ ### code adapted from Aaron Bogutz, Louis Lefebvre lab (UBC)
+    printf "genome "$AL_BUILD"\ntrackDb "$AL_BUILD"/trackDb.txt" > "$PARAM_OUTPUT_DIR"/Track_Hub/genomes.txt
+    printf "hub <name>\nshortLabel <short name>\nlongLabel <Hub to display data at UCSC>\ngenomesFile genomes.txt\nemail <email>" > "$PARAM_OUTPUT_DIR"/Track_Hub/hub.txt
+
+    printf "track %s\nshortLabel %s\nlongLabel %s\ntype bigWig\nbigDataUrl %s\ncolor 215,215,215\naltColor 225,225,225\nautoScale on\n\n" $VAR_OUTPUT_BASENAME"_total_methyl" $VAR_OUTPUT_BASENAME"_total_methyl" $VAR_OUTPUT_BASENAME"_total_methyl" $VAR_OUTPUT_BASENAME"_total_methyl.bw" | tee -a "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/trackDb.txt
+    printf "track %s\nshortLabel %s\nlongLabel %s\ntype bigWig\nbigDataUrl %s\ncolor 215,215,215\naltColor 225,225,225\nautoScale on\n\n" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1"_methyl" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1"_methyl" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1"_methyl" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1"_methyl.bw" | tee -a "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/trackDb.txt
+    printf "track %s\nshortLabel %s\nlongLabel %s\ntype bigWig\nbigDataUrl %s\ncolor 215,215,215\naltColor 225,225,225\nautoScale on\n\n" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2"_methyl" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2"_methyl" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2"_methyl" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2"_methyl.bw" | tee -a "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/trackDb.txt
+    printf "track %s\nshortLabel %s\nlongLabel %s\ntype bigWig\nbigDataUrl %s\ncolor 215,215,215\naltColor 225,225,225\nautoScale on\n\n" $VAR_OUTPUT_BASENAME"_total_methyl_LOC" $VAR_OUTPUT_BASENAME"_total_methyl_LOC" $VAR_OUTPUT_BASENAME"_total_methyl_LOC" $VAR_OUTPUT_BASENAME"_total_methyl_LOC.bw" | tee -a "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/trackDb.txt
+    printf "track %s\nshortLabel %s\nlongLabel %s\ntype bigWig\nbigDataUrl %s\ncolor 215,215,215\naltColor 225,225,225\nautoScale on\n\n" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1"_methyl_LOC" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1"_methyl_LOC" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1"_methyl_LOC" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN1"_methyl_LOC.bw" | tee -a "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/trackDb.txt
+    printf "track %s\nshortLabel %s\nlongLabel %s\ntype bigWig\nbigDataUrl %s\ncolor 215,215,215\naltColor 225,225,225\nautoScale on\n\n" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2"_methyl_LOC" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2"_methyl_LOC" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2"_methyl_LOC" $VAR_OUTPUT_BASENAME"_"$PARAM_STRAIN2"_methyl_LOC.bw" | tee -a "$PARAM_OUTPUT_DIR"/Track_Hub/"$AL_BUILD"/trackDb.txt
+
+
+    $AL_BIN_HUBCHECK -noTracks "$PARAM_OUTPUT_DIR"/Track_Hub/hub.txt
+    printProgress "[TrackHub generate] finished successfully"
+
+
 
 #}
 fi

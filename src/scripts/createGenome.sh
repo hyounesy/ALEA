@@ -4,23 +4,22 @@ pushd `dirname $0` > /dev/null
 AL_DIR_TOOLS=`pwd -P` # get the full path to itself
 popd > /dev/null
 
-#source $AL_DIR_TOOLS/alea.config
-source /alea-data/alea.config
+source $AL_DIR_TOOLS/alea.config
+#source /alea-data/alea.config
 
 ##############################################################################
 #############   Module 2: creating insilico genome
 ##############################################################################
 
-if test $# -lt 5
+if test $# -lt 4
 then
     echo "
 Usage:
-         alea createGenome reference.fasta phased.vcf.gz strain1 strain2 outputDir
+         alea createGenome phased.vcf.gz strain1 strain2 outputDir
          
-         alea createGenome -snps-indels-separately reference.fasta phased_snps.vcf.gz phased_indels.vcf.gz strain1 strain2 outputDir
+         alea createGenome -snps-indels-separately phased_snps.vcf.gz phased_indels.vcf.gz strain1 strain2 outputDir
 
 Options:
-         reference.fasta        the reference genome fasta file
          phased.vcf.gz          the phased variants vcf file (including SNPs and Indels)
          strain1                name of strain1 exactly as specified in the vcf file (e.g. hap1)
          strain2                name of strain2 exactly as specified in the vcf file (e.g. hap2)
@@ -33,8 +32,6 @@ Options:
 Output:
          Creates two parental insilico genomes strain1.fasta and strain2.fasta as well
          as alignment indeces.
-         A concatenated genome strain1_strain2.fasta will be created if
-         AL_USE_CONCATENATED_GENOME=1 is set in alea.config
          
 Note:
          It is possible to have SNPs and Indels in two separate vcf files. In that case
@@ -76,11 +73,9 @@ function createFastaIndex {
     
     if [ $AL_USE_BWA = 1 ]; then
         $AL_BIN_BWA_INDEX $PARAM_FASTA
-    elif [ $AL_USE_BOWTIE1 = 1 ]; then
-        aleaCreateDir "$PARAM_OUTPUT_DIR"/bowtie1-index
-        $AL_BIN_BOWTIE1_INDEX "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie1-index/"$PARAM_STRAIN"
     elif [ $AL_USE_BOWTIE2 = 1 ]; then
         aleaCreateDir "$PARAM_OUTPUT_DIR"/bowtie2-index
+	ln -s "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"${PARAM_FASTA%.*}.fa"
         $AL_BIN_BOWTIE2_INDEX --large-index "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"$PARAM_STRAIN"
     elif [ $AL_USE_BISMARK = 1 ]; then
         aleaCreateDir "$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN"
@@ -91,6 +86,7 @@ function createFastaIndex {
         $AL_BIN_STAR --runMode genomeGenerate --runThreadN 36 --genomeDir "$PARAM_OUTPUT_DIR"/STAR-index/"$PARAM_STRAIN" --genomeFastaFiles "$PARAM_FASTA"
     elif [ $AL_USE_TOPHAT2 = 1 ]; then
         aleaCreateDir "$PARAM_OUTPUT_DIR"/bowtie2-index
+        ln -s "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"${PARAM_FASTA%.*}.fa"
         $AL_BIN_BOWTIE2_INDEX --large-index "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"$PARAM_STRAIN"
     fi
     
@@ -123,12 +119,12 @@ function createRefStrRefmap {
     
     if [ "$1" = "-snps-indels-separately" ]; then
         
-        PARAM_INPUT_FASTA=$2
-        PARAM_INPUT_VCF_SNPS=$3
-        PARAM_INPUT_VCF_INDELS=$4
-        PARAM_STRAIN1=$5
-        PARAM_STRAIN2=$6
-        PARAM_OUTPUT_DIR=$7
+        PARAM_INPUT_FASTA=$AL_REFERENCE_GENOME
+        PARAM_INPUT_VCF_SNPS=$2
+        PARAM_INPUT_VCF_INDELS=$3
+        PARAM_STRAIN1=$4
+        PARAM_STRAIN2=$5
+        PARAM_OUTPUT_DIR=$6
         
         aleaCheckFileExists $PARAM_INPUT_VCF_SNPS
         aleaCheckFileExists $PARAM_INPUT_VCF_INDELS
@@ -204,11 +200,11 @@ function createRefStrRefmap {
     else
         #all varients (snps and indels) are in a single vcf file
         
-        PARAM_INPUT_FASTA=$1
-        PARAM_INPUT_VCF=$2
-        PARAM_STRAIN1=$3
-        PARAM_STRAIN2=$4
-        PARAM_OUTPUT_DIR=$5
+        PARAM_INPUT_FASTA=$AL_REFERENCE_GENOME
+        PARAM_INPUT_VCF=$1
+        PARAM_STRAIN1=$2
+        PARAM_STRAIN2=$3
+        PARAM_OUTPUT_DIR=$4
         
         aleaCheckFileExists $PARAM_INPUT_VCF
         aleaCheckFileExists $PARAM_INPUT_FASTA
@@ -254,16 +250,11 @@ function createRefStrRefmap {
         fi
     fi
     
-    if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
-        VAR_FASTA_CONCAT="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1"_"$PARAM_STRAIN2".fasta
-        concatFasta "$VAR_FASTA1" "$VAR_FASTA2" "$PARAM_STRAIN1" "$PARAM_STRAIN2" "$VAR_FASTA_CONCAT"
-        
-        $AL_BIN_SAMTOOLS faidx "$VAR_FASTA_CONCAT"
-        createFastaIndex "$VAR_FASTA_CONCAT" "$PARAM_STRAIN1"_"$PARAM_STRAIN2" "$PARAM_OUTPUT_DIR"
-    else
-        createFastaIndex "$VAR_FASTA1" "$PARAM_STRAIN1" "$PARAM_OUTPUT_DIR"
-        createFastaIndex "$VAR_FASTA2" "$PARAM_STRAIN2" "$PARAM_OUTPUT_DIR"
-    fi
-    
-    printProgress "[createGenome] Done"
+VAR_FASTA_CONCAT="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1"_"$PARAM_STRAIN2".fasta
+concatFasta "$VAR_FASTA1" "$VAR_FASTA2" "$PARAM_STRAIN1" "$PARAM_STRAIN2" "$VAR_FASTA_CONCAT"
+$AL_BIN_SAMTOOLS faidx "$VAR_FASTA_CONCAT"
+
+createFastaIndex "$VAR_FASTA_CONCAT" "$PARAM_STRAIN1"_"$PARAM_STRAIN2" "$PARAM_OUTPUT_DIR"
+createFastaIndex "$AL_REFERENCE_GENOME" "$AL_BUILD" "$AL_DIR_REFERENCES"
+printProgress "[createGenome] Done"
 #}

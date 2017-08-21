@@ -9,7 +9,7 @@ AL_ANALYSIS_CHOICE='
 [2] RNAseq
 [3] BSseq'
 
-AL_ANALYSIS_TYPE=1
+AL_ANALYSIS_TYPE=3
 
 #--------------------------------------------------------------------
 # aligner type
@@ -18,14 +18,14 @@ AL_ANALYSIS_TYPE=1
 # In the case of ChIP-seq
 AL_ALIGNER_CHOICE_CHIP='
 [1] BWA
-[2] Bowtie
-[3] Bowtie2'
+[2] Bowtie (deprecated)
+[3] Bowtie2 (recommended)'
 
-AL_ALIGNER_TYPE_CHIP=1
+AL_ALIGNER_TYPE_CHIP=3
 
 # In the case of RNA-seq
 AL_ALIGNER_CHOICE_RNA='
-[1] STAR
+[1] STAR (recommended)
 [2] Tophat2'
 
 AL_ALIGNER_TYPE_RNA=1
@@ -37,7 +37,7 @@ AL_ALIGNER_CHOICE_BS='
 AL_ALIGNER_TYPE_BS=1
 
 #--------------------------------------------------------------------
-# method type
+# method type : discontinued in ALEA2
 #--------------------------------------------------------------------
 
 # do not allow separate genome method
@@ -46,3 +46,16 @@ AL_ALIGNER_TYPE_BS=1
 #[2] Separate genome method'
 
 AL_METHOD_TYPE=1
+
+
+#--------------------------------------------------------------------
+# reference genome path variables
+#--------------------------------------------------------------------
+
+# options to set global variables to reference genome and chrom sizes file paths
+AL_REFERENCE_CHOICE='
+[1] Keep current settings
+[2] Automatically download genome, or change between pre-exsiting builds (recommended)
+[3] Manually set file paths to local files (not recommended)'
+
+AL_REFERENCE_TYPE=1
