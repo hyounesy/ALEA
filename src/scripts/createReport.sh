@@ -1,21 +1,13 @@
-#-----------------------------------------------------------#
-#			MODULE 5			    #
-#-----------------------------------------------------------#
-# generates .tsv data files containing allelic coverage and
-# normalized total values over user-define intervals. These int-
-# ervals can be gene exons, gene promoters, known enhancers
-# CpG islands, etc.
-#-----------------------------------------------------------#
-
 #!/bin/bash
 
 pushd `dirname $0` > /dev/null
 AL_DIR_TOOLS=`pwd -P` # get the full path to itself
 popd > /dev/null
 
-source $AL_DIR_TOOLS/alea.config
-# DOCKER
-#source /alea-data/alea.config
+# MANUAL INSTALLATION
+#source $AL_DIR_TOOLS/alea.config
+# DOCKER INSTALLATION
+source /alea-data/alea.config
 
 ##############################################################################
 #############   Module 5: statistical analysis
