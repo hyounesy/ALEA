@@ -4,10 +4,9 @@ pushd `dirname $0` > /dev/null
 AL_DIR_TOOLS=`pwd -P` # get the full path to itself
 popd > /dev/null
 
-# MANUAL INSTALLATION
-#source $AL_DIR_TOOLS/alea.config
-# DOCKER INSTALLATION
-source /alea-data/alea.config
+
+source $AL_DIR_TOOLS/alea.config
+
 
 
 ##############################################################################
