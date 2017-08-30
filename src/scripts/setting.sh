@@ -4,14 +4,17 @@ pushd `dirname $0` > /dev/null
 AL_DIR_TOOLS=`pwd -P` # get the full path to itself
 popd > /dev/null
 
-source $AL_DIR_TOOLS/alea.config
-aleaCreateDir $AL_DIR_REFERENCES
+# MANUAL INSTALLATION
+#source $AL_DIR_TOOLS/alea.config
+# DOCKER INSTALLATION
+source /alea-data/alea.config
+
 
 ##############################################################################
 #############   Module 0: interactive setting
 ##############################################################################
 
-
+aleaCreateDir $AL_DIR_REFERENCES
 function download_genome {
 	local BUILD=$1
 	cd alea-data/reference_genomes
