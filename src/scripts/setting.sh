@@ -260,9 +260,10 @@ function modifyConfig {
     
     if [ $AL_DEBUG = 0 ]
     then
-        mv $AL_DIR_TOOLS/.alea.config.tmp $AL_DIR_TOOLS/alea.config
+# MANUAL INSTALL
+#        mv $AL_DIR_TOOLS/.alea.config.tmp $AL_DIR_TOOLS/alea.config
 # DOCKER
-#        mv $AL_DIR_TOOLS/.alea.config.tmp /alea-data/alea.config
+        mv $AL_DIR_TOOLS/.alea.config.tmp /alea-data/alea.config
     else
         cp $AL_DIR_TOOLS/.alea.config.tmp $AL_DIR_TOOLS/alea.config
         mv $AL_DIR_TOOLS/.alea.config.tmp $AL_DIR_TOOLS/.alea.config.tmp2
