@@ -9,6 +9,17 @@ popd > /dev/null
 source $AL_DIR_TOOLS/alea.config
 
 
+# MANUAL INSTALLATION
+#source $AL_DIR_TOOLS/alea.config
+# DOCKER INSTALLATION
+if [ -f /alea-data/alea.config ]
+then
+    source /alea-data/alea.config
+else
+    source $AL_DIR_TOOLS/alea.config
+fi
+
+
 
 
 ##############################################################################
