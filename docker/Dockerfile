@@ -1,13 +1,13 @@
 ##########################################################################################
 # Dockerfile
 #
-# Software:         ALEA
-# Software Version: alea.1.t.rt
+# Software:         ALEA2
+# Software Version: alea.2.0
 # Description:      A toolbox for Allele-specific Epigenomics Analysis
 # Base Image:       java:7
-# Build Cmd:        docker build -t taskkoike/alea:1.t.rt /path/to/dockerfile-directory/
-# Pull Cmd:         docker pull taskkoike/alea:1.t.rt
-# Run Cmd:          docker run -it taskkoike/alea:1.t.rt
+# Build Cmd:        docker build -t taskkoike/alea:2.0 /path/to/dockerfile-directory/
+# Note bene:        export ALEA2='docker run -v <path/to/host/alea/data>:/alea-data -i taskkoike/alea:2.0'
+# Run Cmd:          $ALEA2 setting
 ##########################################################################################
 
 FROM java:7
@@ -172,9 +172,9 @@ RUN make && \
 
 WORKDIR /tmp
 RUN wget -q https://github.com/arq5x/bedtools2/releases/download/v2.22.0/bedtools-2.22.0.tar.gz && \
-  mkdir /opt/bedtools2.2/ && \
-  tar -xf bedtools-2.22.0.tar.gz -C /opt/bedtools2.2/
-WORKDIR /opt/bedtools2.2/bedtools2
+  mkdir /opt/bedtools22/ && \
+  tar -xf bedtools-2.22.0.tar.gz -C /opt/bedtools22/
+WORKDIR /opt/bedtools22/bedtools2
 RUN make && \
   rm -f /tmp/bedtools-2.22.0.tar.gz
 
@@ -212,14 +212,14 @@ RUN wget -q http://ccb.jhu.edu/software/tophat/downloads/tophat-2.1.1.Linux_x86_
 
 
 ##########################################################################################
-# STAR-2.5.3a
+# STAR-2.5.1b
 ##########################################################################################
 
 WORKDIR /tmp
-RUN wget -q https://github.com/alexdobin/STAR/archive/2.5.3a.tar.gz && \
-  tar -xf 2.5.3a.tar.gz -C /opt && \
-  make STAR -C /opt/STAR-2.5.3a/source && \
-  rm -f 2.5.3a.tar.gz
+RUN wget -q https://github.com/alexdobin/STAR/archive/2.5.1b.tar.gz && \
+  tar -xf 2.5.1b.tar.gz -C /opt && \
+  make STAR -C /opt/STAR-2.5.1b/source && \
+  rm -f 2.5.1b.tar.gz
 
 
 ##########################################################################################
@@ -241,22 +241,22 @@ RUN wget -q  http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/hubCheck && \
 
 
 ##########################################################################################
-# ALEA 1.t.2
+# ALEA2 2.0
 ##########################################################################################
 
 ENV ALEA_INSTALL_DIR=/opt/alea
-ENV ALEA_VERSION=rt
+ENV ALEA_VERSION=2.0
 ENV ALEA_FILENAME=alea.${ALEA_VERSION}.tar.gz
 #ENV ALEA_URL=https://github.com/hyounesy/ALEA/raw/Task/dist/${ALEA_FILENAME}
 #https://github.com/hyounesy/ALEA/raw/master/dist/alea.1.2.2.tar.gz
 
-ENV ALEA_URL=https://datahub-7ak6xof0.udes.genap.ca/${ALEA_FILENAME}
+ENV ALEA_URL=https://github.com/hyounesy/ALEA/raw/master/dist/${ALEA_FILENAME}
 
 
 WORKDIR /tmp
-#COPY  ${ALEA_FILENAME} ${ALEA_FILENAME}
-RUN wget -q $ALEA_URL && \
-  tar -zxvf ${ALEA_FILENAME} -C /opt && \
+COPY  ${ALEA_FILENAME} ${ALEA_FILENAME}
+RUN wget -q $ALEA_URL
+RUN  tar -zxvf ${ALEA_FILENAME} -C /opt && \
   rm -f /tmp/${ALEA_FILENAME}
 
 
@@ -274,11 +274,12 @@ RUN ln -s /opt/samtools-0.1.19/samtools $ALEA_INSTALL_DIR/bin/ && \
   ln -s /opt/shapeit/bin/shapeit $ALEA_INSTALL_DIR/bin/ && \
   find $VCFTOOLS_INSTALL_DIR/bin/ -maxdepth 1 -perm -+x -type f | xargs -i ln -s {} $ALEA_INSTALL_DIR/bin/ && \
   find /opt/bedtools2/bin/ -maxdepth 1 -perm -+x -type f | xargs -i ln -s {} $ALEA_INSTALL_DIR/bin/ && \
-  find /opt/bedtools2.2/bedtools2/bin/ -maxdepth 1 -perm -+x -type f | xargs -i ln -s {} $ALEA_INSTALL_DIR/bin/bedtools2.2 && \
   find /opt/bedops/bin/ -maxdepth 1 -perm -+x -type f | xargs -i ln -s {} $ALEA_INSTALL_DIR/bin/ && \
   find /opt/bismark_v0.16.3/ -maxdepth 1 -perm -+x -type f | xargs -i ln -s {} $ALEA_INSTALL_DIR/bin/ && \
   find /opt/tophat-2.1.1.Linux_x86_64/ -maxdepth 1 -perm -+x -type f | xargs -i ln -s {} $ALEA_INSTALL_DIR/bin/ && \
-  ln -s /opt/STAR-2.5.3a/source/STAR $ALEA_INSTALL_DIR/bin/
+  ln -s /opt/STAR-2.5.1b/source/STAR $ALEA_INSTALL_DIR/bin/
+
+#  find /opt/bedtools22/bedtools2/bin/ -maxdepth 1 -perm -+x -type f | xargs -i ln -s {} $ALEA_INSTALL_DIR/bin/bedtools22 && \
 
 RUN  find /opt/bowtie2-2.2.9/ -maxdepth 1 -perm -+x -type f | xargs -i ln -s {} /usr/local/bin/ 
 
