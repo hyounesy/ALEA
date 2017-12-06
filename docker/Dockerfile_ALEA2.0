@@ -6,8 +6,8 @@
 # Description:      A toolbox for Allele-specific Epigenomics Analysis
 # Base Image:       java:7
 # Build Cmd:        docker build -t taskkoike/alea:2.0 /path/to/dockerfile-directory/
-# Note bene:		export ALEA2='docker run -v <path/to/host/alea/data>:/alea-data -i taskkoike/alea:2.0'
-# Run Cmd:			$ALEA2 setting
+# Note bene:        export ALEA2='docker run -v <path/to/host/alea/data>:/alea-data -i taskkoike/alea:2.0'
+# Run Cmd:          $ALEA2 setting
 ##########################################################################################
 
 FROM java:7
@@ -255,9 +255,9 @@ ENV ALEA_URL=https://github.com/hyounesy/ALEA/raw/master/dist/${ALEA_FILENAME}
 
 WORKDIR /tmp
 COPY  ${ALEA_FILENAME} ${ALEA_FILENAME}
-RUN wget -q $ALEA_URL && \
-#RUN  tar -zxvf ${ALEA_FILENAME} -C /opt && \
-RUN rm -f /tmp/${ALEA_FILENAME}
+RUN wget -q $ALEA_URL
+RUN  tar -zxvf ${ALEA_FILENAME} -C /opt && \
+  rm -f /tmp/${ALEA_FILENAME}
 
 
 ##########################################################################################
