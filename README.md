@@ -7,8 +7,8 @@ Building on our previous work on the ALEA software package, a computational tool
 
 ## Please refer to the ALEA2 user guide (PDF) for installation and run instructions
   
-* [Docker installation](https://github.com/hyounesy/ALEA/raw/master/docker/Dockerfile)  
-* [distribution package](https://github.com/hyounesy/ALEA/raw/master/alea.2.0.tar.gz)
+* [Docker installation](https://github.com/hyounesy/ALEA/raw/master/docker)  
+* [distribution package](https://github.com/hyounesy/ALEA/raw/master/dist/alea.2.0.tar.gz)
 * [documentation (PDF)](https://github.com/hyounesy/ALEA/raw/master/doc/ALEA2-userguide.pdf)
 * test data: ftp://ftp.bcgsc.ca/supplementary/ALEA/files/test-data/
 
