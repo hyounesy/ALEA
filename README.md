@@ -19,6 +19,7 @@ sequencing data (ChIP-seq, RNA-seq, etc.) that takes the raw sequencing data and
     * [Mouse trophoblast](#example2-mouse-trophoblast)
   * [Using SHAPEIT2](#using-shapeit2-for-genotype-phasing)
   * [Credits](#credits)
+  * [MEA](#mea)
   
 ## Quick Reference
 ### Dependencies
@@ -498,3 +499,7 @@ To run SHAPEIT2 on reference panel of haplotypes, provided by the 1000 Genomes p
 
 ## Credits
 Hamid Younesy, Torsten Möller, Alireza Heravi-Moussavi, Jeffrey B. Cheng, Joseph F. Costello, Matthew C. Lorincz, Mohammad M. Karimi and Steven J. M. Jones, "ALEA: a toolbox for allele-specific epigenomics analysis." Bioinformatics 30.8 (2014): 1172-1174. [[link to paper](http://bioinformatics.oxfordjournals.org/content/30/8/1172.long)]
+
+## MEA
+Please note: ALEA is no longer supported. A new version, called MEA, has been developped and can be found here: https://github.com/julienrichardalbert/MEA
+
