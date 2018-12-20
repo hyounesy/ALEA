@@ -3,7 +3,17 @@
 pushd `dirname $0` > /dev/null
 AL_DIR_TOOLS=`pwd -P`
 popd > /dev/null
-source $AL_DIR_TOOLS/alea.config
+
+# MANUAL INSTALLATION
+#source $AL_DIR_TOOLS/alea.config
+# DOCKER INSTALLATION
+if [ -f /alea-data/alea.config ]
+then
+    source /alea-data/alea.config
+else
+    source $AL_DIR_TOOLS/alea.config
+fi
+
 
 
 function usage {
@@ -14,7 +24,10 @@ Contact: Hamid Younesy <hyounesy@bcgsc.ca>
 
 Usage:   alea <command> [options]
 
-Command: phaseVCF       creates phased VCF file from an unphased VCF and
+Command: setting        configure ALEA interactively and modifies confing
+                        (.setting and .config)
+                        
+         phaseVCF       creates phased VCF file from an unphased VCF and
                         haplotypes (.haps)
                         
          createGenome   creates insilico genome (.fasta) from a reference
@@ -33,6 +46,10 @@ then
     shift
     
     case $VAR_COMMAND in
+        setting)
+            $AL_DIR_TOOLS/setting.sh $@
+            ;;
+
         phaseVCF)
             $AL_DIR_TOOLS/phaseVCF.sh $@
             ;;
@@ -48,7 +65,11 @@ then
         createTracks)
             $AL_DIR_TOOLS/createTracks.sh $@
             ;;
-
+            
+        createReport)
+            $AL_DIR_TOOLS/createReport.sh $@
+            ;;
+            
         -h )
             usage
             exit 0

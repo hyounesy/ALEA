@@ -4,22 +4,24 @@ pushd `dirname $0` > /dev/null
 AL_DIR_TOOLS=`pwd -P` # get the full path to itself
 popd > /dev/null
 
-source $AL_DIR_TOOLS/alea.config
+# MANUAL INSTALLATION
+#source $AL_DIR_TOOLS/alea.config
+# DOCKER INSTALLATION
+source /alea-data/alea.config
 
 ##############################################################################
 #############   Module 2: creating insilico genome
 ##############################################################################
 
-if test $# -lt 5
+if test $# -lt 4
 then
     echo "
 Usage:
-         alea createGenome reference.fasta phased.vcf.gz strain1 strain2 outputDir
+         alea createGenome phased.vcf.gz strain1 strain2 outputDir
          
-         alea createGenome -snps-indels-separately reference.fasta phased_snps.vcf.gz phased_indels.vcf.gz strain1 strain2 outputDir
+         alea createGenome -snps-indels-separately phased_snps.vcf.gz phased_indels.vcf.gz strain1 strain2 outputDir
 
 Options:
-         reference.fasta        the reference genome fasta file
          phased.vcf.gz          the phased variants vcf file (including SNPs and Indels)
          strain1                name of strain1 exactly as specified in the vcf file (e.g. hap1)
          strain2                name of strain2 exactly as specified in the vcf file (e.g. hap2)
@@ -32,8 +34,6 @@ Options:
 Output:
          Creates two parental insilico genomes strain1.fasta and strain2.fasta as well
          as alignment indeces.
-         A concatenated genome strain1_strain2.fasta will be created if
-         AL_USE_CONCATENATED_GENOME=1 is set in alea.config
          
 Note:
          It is possible to have SNPs and Indels in two separate vcf files. In that case
@@ -46,7 +46,7 @@ fi
 #concatenate two insilico genomes to make the 
 function concatFasta {
     printProgress "[concatFasta] Started"
-
+    
     local PARAM_FASTA1=$1
     local PARAM_FASTA2=$2
     local PARAM_STRAIN1=$3
@@ -54,8 +54,8 @@ function concatFasta {
     local PARAM_FASTA_CONCAT=$5
     
     #first make the chromosome names unique
-    cat "$PARAM_FASTA1" | sed 's/>/>'"$PARAM_STRAIN1"'_chr/g' > "$PARAM_FASTA_CONCAT".1
-    cat "$PARAM_FASTA2" | sed 's/>/>'"$PARAM_STRAIN2"'_chr/g' > "$PARAM_FASTA_CONCAT".2
+    cat "$PARAM_FASTA1" | sed 's/>/>'"$PARAM_STRAIN1"'_/g' > "$PARAM_FASTA_CONCAT".1
+    cat "$PARAM_FASTA2" | sed 's/>/>'"$PARAM_STRAIN2"'_/g' > "$PARAM_FASTA_CONCAT".2
     
     # concatenate the two fasta files. (add a newline inbetween)
     echo >> "$PARAM_FASTA_CONCAT".1 
@@ -70,20 +70,49 @@ function createFastaIndex {
     local PARAM_FASTA=$1
     local PARAM_STRAIN=$2
     local PARAM_OUTPUT_DIR=$3
-
+    
     printProgress "[createFastaIndex] Started"
-
+    
     if [ $AL_USE_BWA = 1 ]; then
         $AL_BIN_BWA_INDEX $PARAM_FASTA
-    elif [ $AL_USE_BOWTIE1 = 1 ]; then
-        aleaCreateDir "$PARAM_OUTPUT_DIR"/bowtie1-index
-        $AL_BIN_BOWTIE1_INDEX "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie1-index/"$PARAM_STRAIN"
     elif [ $AL_USE_BOWTIE2 = 1 ]; then
         aleaCreateDir "$PARAM_OUTPUT_DIR"/bowtie2-index
-        $AL_BIN_BOWTIE2_INDEX "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"$PARAM_STRAIN"
+	ln -s "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"${PARAM_FASTA%.*}.fa"
+        $AL_BIN_BOWTIE2_INDEX --large-index "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"$PARAM_STRAIN"
+    elif [ $AL_USE_BISMARK = 1 ]; then
+        aleaCreateDir "$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN"
+        cp "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN"
+        $AL_BIN_BISMARK_INDEX --bowtie2 --path_to_bowtie $AL_DIR_TOOLS "$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN"
+    elif [ $AL_USE_STAR = 1 ]; then
+        aleaCreateDir "$PARAM_OUTPUT_DIR"/STAR-index/"$PARAM_STRAIN"
+        $AL_BIN_STAR --runMode genomeGenerate --runThreadN 36 --genomeDir "$PARAM_OUTPUT_DIR"/STAR-index/"$PARAM_STRAIN" --genomeFastaFiles "$PARAM_FASTA"
+    elif [ $AL_USE_TOPHAT2 = 1 ]; then
+        aleaCreateDir "$PARAM_OUTPUT_DIR"/bowtie2-index
+        ln -s "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"${PARAM_FASTA%.*}.fa"
+        $AL_BIN_BOWTIE2_INDEX --large-index "$PARAM_FASTA" "$PARAM_OUTPUT_DIR"/bowtie2-index/"$PARAM_STRAIN"
     fi
-
+    
     printProgress "[createFastaIndex] Done"
+}
+
+function createRefStrRefmap {
+    local PARAM_FASTA_IDX=$1
+    local PARAM_OUTPUT_REFMAP=$2
+    
+    printProgress "[createRefStrRefmap] Started"
+    
+    awk '
+        BEGIN{
+            FS = "\t"
+            OFS = "\t"
+        }
+        {
+            print ">" $1
+            print "0", "0", $2
+        }
+    ' "$PARAM_FASTA_IDX" > "$PARAM_OUTPUT_REFMAP"
+    
+    printProgress "[createRefStrRefmap] Done"
 }
 
 ## creates the insilico genome for each haplotype
@@ -92,21 +121,30 @@ function createFastaIndex {
     
     if [ "$1" = "-snps-indels-separately" ]; then
         
-        PARAM_INPUT_FASTA=$2
-        PARAM_INPUT_VCF_SNPS=$3
-        PARAM_INPUT_VCF_INDELS=$4
-        PARAM_STRAIN1=$5
-        PARAM_STRAIN2=$6
-        PARAM_OUTPUT_DIR=$7
+        PARAM_INPUT_FASTA=$AL_REFERENCE_GENOME
+        PARAM_INPUT_VCF_SNPS=$2
+        PARAM_INPUT_VCF_INDELS=$3
+        PARAM_STRAIN1=$4
+        PARAM_STRAIN2=$5
+        PARAM_OUTPUT_DIR=$6
         
         aleaCheckFileExists $PARAM_INPUT_VCF_SNPS
         aleaCheckFileExists $PARAM_INPUT_VCF_INDELS
         aleaCheckFileExists $PARAM_INPUT_FASTA
         aleaCreateDir $PARAM_OUTPUT_DIR
         
+        if [ ! -f "$PARAM_INPUT_FASTA".fai ]; then
+            printProgress "[createGenome] Indexing Reference"
+            $AL_BIN_SAMTOOLS faidx "$PARAM_INPUT_FASTA"
+        fi
+        
         if [ $PARAM_STRAIN1 = $VAR_REFERENCE_STRAIN ]; then
-            # nothing to do. it is the reference genome
-            VAR_FASTA1="$PARAM_INPUT_FASTA"
+            # copy reference genome as reference stain name
+            VAR_FASTA1="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1".fasta
+            cp "$PARAM_INPUT_FASTA" "$VAR_FASTA1"
+            cp "$PARAM_INPUT_FASTA".fai "$VAR_FASTA1".fai
+            # create a refmap file for reference strain
+            createRefStrRefmap "$VAR_FASTA1".fai "$VAR_FASTA1".refmap
         else
             VAR_GENOME1_SNPS="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1".snps.fasta
             # create insilico genome for strain 1 snps using reference
@@ -130,10 +168,13 @@ function createFastaIndex {
             fi
         fi
         
-        
         if [ $PARAM_STRAIN2 = $VAR_REFERENCE_STRAIN ]; then
-            # nothing to do. it is the reference genome
-            VAR_FASTA2="$PARAM_INPUT_FASTA"
+            # copy reference genome as reference stain name
+            VAR_FASTA2="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN2".fasta
+            cp "$PARAM_INPUT_FASTA" "$VAR_FASTA2"
+            cp "$PARAM_INPUT_FASTA".fai "$VAR_FASTA2".fai
+            # create a refmap file for reference strain
+            createRefStrRefmap "$VAR_FASTA2".fai "$VAR_FASTA2".refmap
         else
             VAR_GENOME2_SNPS="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN2".snps.fasta
             # create insilico genome for strain 2 snps using reference
@@ -141,7 +182,7 @@ function createFastaIndex {
                 --input-fasta="$PARAM_INPUT_FASTA" \
                 --input-vcf="$PARAM_INPUT_VCF_SNPS" \
                 --strain="$PARAM_STRAIN2" \
-                --output-fasta="$VAR_GENOME1_SNPS"
+                --output-fasta="$VAR_GENOME2_SNPS"
             
             VAR_FASTA2="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN2".fasta
             
@@ -161,19 +202,28 @@ function createFastaIndex {
     else
         #all varients (snps and indels) are in a single vcf file
         
-        PARAM_INPUT_FASTA=$1
-        PARAM_INPUT_VCF=$2
-        PARAM_STRAIN1=$3
-        PARAM_STRAIN2=$4
-        PARAM_OUTPUT_DIR=$5
+        PARAM_INPUT_FASTA=$AL_REFERENCE_GENOME
+        PARAM_INPUT_VCF=$1
+        PARAM_STRAIN1=$2
+        PARAM_STRAIN2=$3
+        PARAM_OUTPUT_DIR=$4
         
         aleaCheckFileExists $PARAM_INPUT_VCF
         aleaCheckFileExists $PARAM_INPUT_FASTA
         aleaCreateDir $PARAM_OUTPUT_DIR
         
+        if [ ! -f "$PARAM_INPUT_FASTA".fai ]; then
+            printProgress "[createGenome] Indexing Reference"
+            $AL_BIN_SAMTOOLS faidx "$PARAM_INPUT_FASTA"
+        fi
+        
         if [ $PARAM_STRAIN1 = $VAR_REFERENCE_STRAIN ]; then
-            # nothing to do. it is the reference genome
-            VAR_FASTA1="$PARAM_INPUT_FASTA"
+            # copy reference genome as reference stain name
+            VAR_FASTA1="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1".fasta
+            cp "$PARAM_INPUT_FASTA" "$VAR_FASTA1"
+            cp "$PARAM_INPUT_FASTA".fai "$VAR_FASTA1".fai
+            # create a refmap file for reference strain
+            createRefStrRefmap "$VAR_FASTA1".fai "$VAR_FASTA1".refmap
         else
             VAR_FASTA1="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1".fasta
             # create insilico genome for strain 1    
@@ -185,8 +235,12 @@ function createFastaIndex {
         fi
         
         if [ $PARAM_STRAIN2 = $VAR_REFERENCE_STRAIN ]; then
-            # nothing to do. it is the reference genome
-            VAR_FASTA2="$PARAM_INPUT_FASTA"
+            # copy reference genome as reference stain name
+            VAR_FASTA2="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN2".fasta
+            cp "$PARAM_INPUT_FASTA" "$VAR_FASTA2"
+            cp "$PARAM_INPUT_FASTA".fai "$VAR_FASTA2".fai
+            # create a refmap file for reference strain
+            createRefStrRefmap "$VAR_FASTA2".fai "$VAR_FASTA2".refmap
         else
             VAR_FASTA2="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN2".fasta
             # create insilico genome for strain 2
@@ -198,16 +252,11 @@ function createFastaIndex {
         fi
     fi
     
-    createFastaIndex "$VAR_FASTA1" "$PARAM_STRAIN1" "$PARAM_OUTPUT_DIR"
-    createFastaIndex "$VAR_FASTA2" "$PARAM_STRAIN2" "$PARAM_OUTPUT_DIR"
+VAR_FASTA_CONCAT="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1"_"$PARAM_STRAIN2".fasta
+concatFasta "$VAR_FASTA1" "$VAR_FASTA2" "$PARAM_STRAIN1" "$PARAM_STRAIN2" "$VAR_FASTA_CONCAT"
+$AL_BIN_SAMTOOLS faidx "$VAR_FASTA_CONCAT"
 
-    if [ $AL_USE_CONCATENATED_GENOME = 1 ]; then
-        VAR_FASTA_CONCAT="$PARAM_OUTPUT_DIR"/"$PARAM_STRAIN1"_"$PARAM_STRAIN2".fasta
-        concatFasta "$VAR_FASTA1" "$VAR_FASTA2" "$PARAM_STRAIN1" "$PARAM_STRAIN2" "$VAR_FASTA_CONCAT"
-    
-        $AL_BIN_SAMTOOLS faidx "$VAR_FASTA_CONCAT"
-        createFastaIndex "$VAR_FASTA_CONCAT" "$PARAM_STRAIN1"_"$PARAM_STRAIN2" "$PARAM_OUTPUT_DIR"
-    fi
-    
-    printProgress "[createGenome] Done"
+createFastaIndex "$VAR_FASTA_CONCAT" "$PARAM_STRAIN1"_"$PARAM_STRAIN2" "$PARAM_OUTPUT_DIR"
+createFastaIndex "$AL_REFERENCE_GENOME" "$AL_BUILD" "$AL_DIR_REFERENCES"
+printProgress "[createGenome] Done"
 #}
